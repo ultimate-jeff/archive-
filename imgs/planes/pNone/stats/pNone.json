@@ -1,0 +1,25 @@
+{
+  "acceleration": 0.7,
+  "armor": 1,
+  "fire_speed": 9999999,
+  "health": 0,
+  "reload_speed": 1.5,
+  "sizex": 0,
+  "sizey": 0,
+  "HB_sizex": 0,
+  "HB_sizey": 0,
+  "top_speed": 4,
+  "min_speed": 0,
+  "turn_speed": 8,
+  "wepon_data": {
+    "curent_wepon": 0,
+    "all_wepons": [],
+    "BPT": 99999999,
+    "wepon_packs": []
+  },
+  "xp_data": {
+    "xp_value": 0,
+    "xp_heal_ratio": 9999999
+  },
+  "affect_data": {}
+}
