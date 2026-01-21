@@ -1,0 +1,10 @@
+{
+  "assets/loader/game_file_maps/engine_assets.json": {
+    "type": "d",
+    "value": null
+  },
+  "assets/loader/texture_maps/engine_textures.json": {
+    "type": "d",
+    "value": null
+  }
+}
