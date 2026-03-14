@@ -1,0 +1,17 @@
+{
+    "port_core":1,
+    "main_core":0,
+    "initilazation_program":[
+        98323,
+        82343,
+        234784,
+        2897482
+    ],
+    "port_memory_map":{
+        "slot0":6,
+        "slot1":6
+    },
+    "devices":[
+        {"name":"ram","slot_type":6}
+    ]
+}

@@ -1,0 +1,61 @@
+stall 0
+stall 0
+jmp 49 
+* 
+* 
+* 
+* 
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+* 
+var8 20
+stall 0
+lr var8 0
+lr 21 10
+lr 22 1
+stall 0
+.loop 
+adi var8 1
+sub 21 var8 25
+cmp 25 2 0
+jmp .loop
+lr 30 777
+hult
