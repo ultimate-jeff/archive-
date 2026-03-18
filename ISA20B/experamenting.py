@@ -311,9 +311,15 @@ if __name__ == "__main__":
         ccomp(text)
     else:
         print("no script to compile")
-        if input("do u want to comp defalt script :").lower() == "y":
+        data = input("enter dir of .txt assembly file :").lower()
+        if data == "y":
             print("compiling ISA20B/assem.txt \n\n\n")
             with open("ISA20B/assem.txt","r") as f:
+                text = f.read()
+            ccomp(text)
+        else:
+            print(f"compiling {data} \n\n\n")
+            with open(data,"r") as f:
                 text = f.read()
             ccomp(text)
     input("press enter to continue :")
