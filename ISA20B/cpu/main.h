@@ -190,14 +190,9 @@ public:
     //    this->mem.set_addr(op[0],op[1]);
     //}
     void LR(uint32_t op[3]){ // reg , data
-        // 1. Mask the incoming data so it absolutely cannot exceed 10 bits
         uint32_t data = mask(op[1], b10_mask);
-        // 2. Generate flags for this data (pretend we just did 'data + 0')
-        // This correctly sets the True, zero, and invert flags!
-        uint32_t flags = this->pu.alu.gen_flags(data, data, 0);
-        // 3. Shift the flags to bits 10-14, and combine with the 10-bit data
+        uint32_t flags = this->pu.alu.gen_flags(data, data, 0); // gen flags
         uint32_t packed = (flags << 10) | data;
-        // 4. Save to memory
         this->mem.set_addr(op[0], packed);
     }
     void push(uint32_t op[3]){ // reg , data : offsetM:100
@@ -283,21 +278,6 @@ public:
     void SDI(uint32_t op[3]){ // reg , data  : offsetM:100
         this->mem.set_addr(op[0],this->pu.SUB(this->mem.get_addr(op[0]),op[1]));
     }
-    /*
-    void ADI(uint32_t op[3]){
-        uint32_t reg_val = this->mem.get_addr(op[0]);
-        // Create a temporary "Register" format for the raw number
-        uint32_t immediate_as_reg = (1 << 10) | (op[1] & b10_mask); 
-        this->mem.set_addr(op[0], this->pu.ADD(reg_val, immediate_as_reg));
-    }
-
-    void SDI(uint32_t op[3]){
-        uint32_t reg_val = this->mem.get_addr(op[0]);
-        // Create a temporary "Register" format for the raw number
-        uint32_t immediate_as_reg = (1 << 10) | (op[1] & b10_mask); 
-        this->mem.set_addr(op[0], this->pu.SUB(reg_val, immediate_as_reg));
-    }
-    */
     void shift_u(uint32_t op[3]){ // reg_a/reg , reg_b/amount , reg_c/output : offsetM:111
         this->mem.set_addr(op[2],this->mem.get_addr(op[0]) << this->mem.get_addr(op[1]));
     }

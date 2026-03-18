@@ -5,25 +5,43 @@
 #include <cstdint>
 #include <string>
 using namespace std;
+#pragma once
 
-class Memory; // the memory class of the cpu 
-namespace dmir{
-    // actual ram class
-    class ram{
-        int cpt = 10;
-        int addr_size = 15;
-        uint32_t size_mask = 32768;
-        Memory mem;
-        uint32_t port_map_num = 0;
+class ram{
     public:
+        ram(){
+            print("cunstructor of ram was called");
+        }
+        void clock(int loops){
+            
+        }
+    private:    
+};
 
-        ram(Memory mem){
-            this->mem = mem;
-            cout << "created a ram " << endl;
-        }
-    private:
-        uint32_t mask(uint32_t value,uint32_t mask){
-            return value & mask;
-        }
-    };
-}
+
+/*
+
+
+0:
+1:
+2:
+3:
+4:
+5:
+6:
+7:
+8:
+9:
+10:
+
+
+ram1:8_ports
+usb:5_ports    
+
+stdf:[
+p1:-> device_id
+
+
+]
+
+*/

@@ -127,47 +127,20 @@ public:
         this->counter = this->call_stack.get_top(true);
     }
 };
-/*
-class Timer {
-public:
-    // We use time_point for start/end and long long for the millisecond result
-    std::chrono::time_point<std::chrono::steady_clock> start_tp;
-    std::chrono::time_point<std::chrono::steady_clock> end_tp;
 
-    Timer() {}
-
-    void start_time() {
-        start_tp = std::chrono::steady_clock::now();
-    }
-    // Returns the elapsed time in milliseconds
-    long long get_time() {
-        end_tp = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_tp - start_tp);
-        return duration.count();
-    }
-    void print_time() {
-        std::cout << "Elapsed time: " << this->get_time() << "ms" << std::endl;
-    }
-};
-*/
-class Timer {
+class Timer { // i made this class with ai for testing
 public:
     std::chrono::time_point<std::chrono::steady_clock> start_tp;
 
     void start_time() {
         start_tp = std::chrono::steady_clock::now();
     }
-
-    // Returns seconds as a double (e.g., 1.234)
     double get_time() {
         auto end_tp = std::chrono::steady_clock::now();
         std::chrono::duration<double,milli> elapsed = end_tp - start_tp;
         return elapsed.count();
     }
-
     void print_time() {
-        // fixed: use fixed-point notation
-        // setprecision(3): exactly 3 digits after the decimal
         std::cout << "Elapsed time: " << std::fixed << std::setprecision(3) 
                   << get_time() << "s" << std::endl;
     }

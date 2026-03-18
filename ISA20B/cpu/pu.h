@@ -35,46 +35,9 @@ Flag decomp_flags(uint32_t value){
     f.invert   = (value >> 4) & 1;
     return f;
 }
-/*
-uint32_t comp_flags(Flag f) {
-    uint32_t result = 0;
-    if (f.invert)   result |= (1 << 0); // Sine is now at the bottom of the flags
-    if (f.overflow) result |= (1 << 1); 
-    if (f.carry)    result |= (1 << 2);
-    if (f.zero)     result |= (1 << 3);
-    if (f.True)     result |= (1 << 4); // True is the "16" bit (Bit 14 of the 20-bit reg)
-    return result;
-}
-
-Flag decomp_flags(uint32_t value) {
-    Flag f;
-    f.invert   = (value >> 0) & 1;
-    f.overflow = (value >> 1) & 1;
-    f.carry    = (value >> 2) & 1;
-    f.zero     = (value >> 3) & 1;
-    f.True     = (value >> 4) & 1;
-    return f;
-}
-*/
 class ALU{
 public:
     ALU(){};
-    /*
-    uint32_t gen_flags(uint32_t raw_result,uint32_t a,uint32_t b){
-        Flag f{};
-        uint32_t result = mask(raw_result, b10_mask);
-        uint32_t sign = sine_mask(b10_mask);   // sign bit (bit 9)
-        f.zero = (result == 0);
-        f.carry = (raw_result > b10_mask);
-        bool sign_a = (a & sign);
-        bool sign_b = (b & sign);
-        bool sign_r = (result & sign);
-        f.overflow = (sign_a == sign_b) && (sign_r != sign_a);
-        f.True = true;
-        f.invert = (result & sign) != 0;//get_bit_section(raw_result,9,1);
-        return comp_flags(f);
-    }
-    */
    uint32_t gen_flags(uint32_t raw_result, uint32_t a, uint32_t b, bool is_sub = false){
         Flag f{};
         uint32_t result = mask(raw_result, b10_mask);
@@ -136,16 +99,6 @@ public:
     uint32_t out_reg = 0;
     int curent_inst = 0;
     PU(){};
-    /*
-    uint32_t comp_reg(uint32_t b10bit,uint32_t mid5bit, uint32_t t5bit){
-        uint32_t result = 0;
-        result |= (t5bit << (alu_data_size + 5));
-        result |= (mid5bit << alu_data_size);
-        result |= b10bit;
-        result = mask(result, b20_mask);
-        return result;
-    }
-        */
     uint32_t comp_reg(uint32_t b10bit, uint32_t mid5bit, uint32_t t5bit){
         uint32_t result = 0;
         result |= (t5bit << (alu_data_size + 5)); // Bit 15+

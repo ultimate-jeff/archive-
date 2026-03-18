@@ -6,43 +6,10 @@
 #include <cstdint>
 #include <functional>
 #include <nlohmann/json.hpp>
-#include <chrono> // for time
 using namespace nlohmann;
 using namespace std;
 #include "cpu/main.h" // main_comp , link
-
-#if __has_include("ssd1/ssd.h")
-    #include "ssd1/ssd.h"
-    #define HAS_SSD1 1
-#else
-    #define HAS_SSD1 0
-#endif
-#if __has_include("ssd2/ssd.h")
-    #include "ssd2/ssd.h"
-    #define HAS_SSD2 1
-#else
-    #define HAS_SSD2 0
-#endif
-
-#if __has_include("ram1/ram.h")
-    #include "ram1/ram.h"
-    #define HAS_RAM1 1
-#else 
-    #define HAS_RAM1 0
-#endif
-#if __has_include("ram2/ram.h")
-    #include "ram2/ram.h"
-    #define HAS_RAM2 1
-#else 
-    #define HAS_RAM2 0
-#endif
-
-#if __has_include("usb/usb_controlor.h")
-    #include "usb/usb_controlor.h"
-    #define HAS_USB 1
-#else
-    #define HAS_USB 0
-#endif
+#include "mother_bord.h"
 
 json bios_conf;
 
@@ -80,9 +47,9 @@ vector<uint32_t> readTextUints(const string& path) {
     return values;
 }
 
-vector<uint32_t> load_inst_to_mem(){
+vector<uint32_t> load_inst_to_mem(string path="bios_conf.txt"){
     vector<uint32_t> inst;
-    inst = readTextUints("bios_conf.txt");
+    inst = readTextUints(path);
     for(int i = 0; i < inst.size() ; i++){
         // i need to inject reg print commands heare 
         if(inst[i] > b20_mask){
@@ -97,41 +64,12 @@ vector<uint32_t> load_inst_to_mem(){
     return inst;
 }
 
-
-class Port_manager{
-    public:
-        vector<uint32_t> device_id_port_map = {
-            7,//dmir
-            6,//lmad
-            73,// display
-            73, // usb manager
-        };
-        Port_manager(Memory *port_mem){
-            Memory *mem = port_mem;
-            if (HAS_RAM1){
-
-            }
-            if (HAS_RAM2){
-
-            }
-            if(HAS_SSD1){
-
-            }
-        }
-        void CLOCK(){
-
-        }
-
-};      
-
-
 int main(){
     Timer timer;
     timer.start_time();
     uint32_t port_core_id = 0;
-    vector<uint32_t> inst = load_inst_to_mem();
-    Port_manager pm(&cores[port_core_id].mem);
-
+    vector<uint32_t> inst = load_inst_to_mem("boot.txt");
+    interface::init(&cores[port_core_id].mem);
     
     cout << "loading data to memory took " << timer.get_time() << " milliseconds" << endl;
     
@@ -143,12 +81,12 @@ int main(){
     int active_cores = 1;
     while(active_cores >= 1){
         loops++;
+        print("on loop " + to_string(loops));
         if (loops % 2 == 0){
-            cout << "on loop " << loops << endl;  
             cout_print_que();
         }
         active_cores = CLOCK(active_cores);
-        pm.CLOCK();
+        interface::clock(loops);
     }
     cout << "program ended" << endl;
     cout << "program took " << timer.get_time() << " milliseconds " << endl;

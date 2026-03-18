@@ -1,6 +1,7 @@
 ﻿
 import string
-
+import sys
+import os
 
 reg_bit_size = 20
 reg_size = 2**reg_bit_size
@@ -282,24 +283,47 @@ class Resoving_comp:
 
         return "\n".join(resolved_lines)
 
-with open("ISA20B/assem.txt","r") as f:
-    text = f.read()
+def ccomp(text):
+    global loger
+    resolver = Resoving_comp()
+    char_comp = Char_comp()
+    num_comp = Num_comp()
 
-resolver = Resoving_comp()
-char_comp = Char_comp()
-num_comp = Num_comp()
+    #step1 = resolver.comp(text)   # resolve labels/vars
+    #step2 = char_comp.comp(step1) # convert opcode names → numbers
+    #result = num_comp.comp(step2)
+    result = num_comp.comp(char_comp.comp(text))
+    print("----------")
+    for line in result:
+        print(f"{line}")
+    print("----------")
+    #print(idk2.comp(text))
+    print()
+    loger.print_errors()
+    loger.print_log()
 
-step1 = resolver.comp(text)   # resolve labels/vars
-step2 = char_comp.comp(step1) # convert opcode names → numbers
-result = num_comp.comp(step2)
-print("----------")
-for line in result:
-    print(f"{line}")
-print("----------")
-#print(idk2.comp(text))
-print()
-loger.print_errors()
-loger.print_log()
+if __name__ == "__main__":
+    # Check if a file path was passed as an argument
+    if len(sys.argv) > 1:
+        file_to_open = sys.argv[1]
+        with open(file_to_open,"r") as f:
+            text = f.read()
+        ccomp(text)
+    else:
+        print("no script to compile")
+        if input("do u want to comp defalt script :").lower() == "y":
+            print("compiling ISA20B/assem.txt \n\n\n")
+            with open("ISA20B/assem.txt","r") as f:
+                text = f.read()
+            ccomp(text)
+    input("press enter to continue :")
+else:
+    print("compiling ISA20B/assem.txt \n\n\n")
+    with open("ISA20B/assem.txt","r") as f:
+        text = f.read()
+    ccomp(text)
+
+# python dir PS C:\Users\matth\AppData\Local\Programs\Python\Python313>        
 """
 #include <iostream>
 #include <vector>
