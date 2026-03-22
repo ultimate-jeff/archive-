@@ -120,6 +120,22 @@ void main_loop(Timer timer,int prints_per_tick = 8){
 
 
 void create_device_instances(){
+    
+}
+
+int main(){
+
+    json conf = load_config("config/bios_config.json");
+
+    uint32_t port_core_id = conf["port_core_id"];
+
+    Timer timer;
+    timer.start_time();
+    vector<uint32_t> inst = load_inst_to_mem(conf["boot_path"]);
+
+    interface::init(&cores[port_core_id].mem);
+    protocall::init();
+    // create_device_instances
     if(HAS_RAM1 > 0.9){
         ram ram1;
     }
@@ -135,21 +151,7 @@ void create_device_instances(){
     if(HAS_USB > 0.9){
         usb usb1;
     }
-}
-
-int main(){
-
-    json conf = load_config("config/bios_config.json");
-
-    uint32_t port_core_id = conf["port_core_id"];
-
-    Timer timer;
-    timer.start_time();
-    vector<uint32_t> inst = load_inst_to_mem(conf["boot_path"]);
-
-    interface::init(&cores[port_core_id].mem);
-    protocall::init();
-    create_device_instances();
+    // -----------
 
     cout << "loading data to memory took " << timer.get_time() << " milliseconds" << endl;
     

@@ -53,10 +53,11 @@ public:
     //vector<vector<bool>> mem;
     static const uint32_t Bmask = b20_mask;
     static const uint32_t Amask = b12_mask;
-    uint32_t mem[4096];
+    //uint32_t mem[4096];
+    vector<uint32_t> mem;
     uint32_t core_id;
     int instances = 0;
-    Memory(uint32_t core_id = -1){
+    Memory(uint32_t core_id = -1): mem(4096,0){
         if (core_id == -1){
             this->core_id = Memory::instances;
         } else {
