@@ -9,9 +9,8 @@
 using namespace nlohmann;
 using namespace std;
 #include "cpu/main.h" // main_comp , link
-#include "mother_bord.h"
-
-json bios_conf;
+#include "components/tools.h"
+//#include "mother_bord.h"
 
 
 json load_config(string path){
@@ -64,32 +63,98 @@ vector<uint32_t> load_inst_to_mem(string path="bios_conf.txt"){
     return inst;
 }
 
-int main(){
-    Timer timer;
-    timer.start_time();
-    uint32_t port_core_id = 0;
-    vector<uint32_t> inst = load_inst_to_mem("boot.txt");
-    interface::init(&cores[port_core_id].mem);
-    
-    cout << "loading data to memory took " << timer.get_time() << " milliseconds" << endl;
-    
-    // main loop
+class ram;
+class ssd;
+class usb;
+#if __has_include("components/ssd.h")
+    #include "components/ssd.h"
+    #define HAS_SSD1 1.0
+#else
+    #define HAS_SSD1 0.0
+#endif
+#if __has_include("components/ssd.h")
+    #include "components/ssd.h"
+    #define HAS_SSD2 1.0
+#else
+    #define HAS_SSD2 0.0
+#endif
+
+#if __has_include("components/ram.h")
+    #include "components/ram.h"
+    #define HAS_RAM1 1.0
+#else 
+    #define HAS_RAM1 0.0
+#endif
+#if __has_include("components/ram.h")
+    #include "components/ram.h"
+    #define HAS_RAM2 1.0
+#else 
+    #define HAS_RAM2 0.0
+#endif
+
+#if __has_include("components/usb_controlor.h")
+    #include "components/usb_controlor.h"
+    #define HAS_USB 1.0
+#else
+    #define HAS_USB 0.0
+#endif
+
+void main_loop(Timer timer,int prints_per_tick = 8){
     cout << "starting program" << endl;
     timer.start_time();
-
     int loops = 0;
     int active_cores = 1;
     while(active_cores >= 1){
         loops++;
         print("on loop " + to_string(loops));
-        if (loops % 2 == 0){
+        if (loops % prints_per_tick == 0){
             cout_print_que();
         }
         active_cores = CLOCK(active_cores);
         interface::clock(loops);
     }
+    cout_print_que();
     cout << "program ended" << endl;
     cout << "program took " << timer.get_time() << " milliseconds " << endl;
+}
+
+
+void create_device_instances(){
+    if(HAS_RAM1 > 0.9){
+        ram ram1;
+    }
+    if(HAS_RAM2 > 0.9){
+        ram ram2;
+    }
+    if(HAS_SSD1 > 0.9){
+        ssd ssd1;
+    }
+    if(HAS_SSD2 > 0.9){
+        ssd ssd2;
+    }
+    if(HAS_USB > 0.9){
+        usb usb1;
+    }
+}
+
+int main(){
+
+    json conf = load_config("config/bios_config.json");
+
+    uint32_t port_core_id = conf["port_core_id"];
+
+    Timer timer;
+    timer.start_time();
+    vector<uint32_t> inst = load_inst_to_mem(conf["boot_path"]);
+
+    interface::init(&cores[port_core_id].mem);
+    protocall::init();
+    create_device_instances();
+
+    cout << "loading data to memory took " << timer.get_time() << " milliseconds" << endl;
+    
+    // main loop
+    main_loop(timer,conf["prints_per_tick"]);
     return 0;
 }
 /*

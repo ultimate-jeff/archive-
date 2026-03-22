@@ -1,6 +1,6 @@
 stall 0
 stall 0
-jmp 49 
+jmp 49
 * 
 * 
 * 

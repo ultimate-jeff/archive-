@@ -203,7 +203,9 @@ class Char_comp:
             except IndexError:
                 loger.log(f"line {line_num} is empty (skiping copalation of line) ")
             except ValueError:
-                loger.error(f"syntax error on line {line_num} : invalid opcode")
+                loger.error(f"syntax error on line {line_num} : invalid opcode (thet's enough giberish )")
+            except Exception as e:
+                loger.error(f"syntax error {e} on line {line_num} (oh crap, you're doomed)")
             else:
                 print(f"compiled: {line}")
                 split_line[0] = str(opcode)
@@ -312,7 +314,7 @@ if __name__ == "__main__":
     else:
         print("no script to compile")
         data = input("enter dir of .txt assembly file :").lower()
-        if data == "y":
+        if data == "y" or data == "":
             print("compiling ISA20B/assem.txt \n\n\n")
             with open("ISA20B/assem.txt","r") as f:
                 text = f.read()

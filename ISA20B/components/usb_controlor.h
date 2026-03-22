@@ -9,14 +9,16 @@
 //using namespace nlohmann;
 using namespace std;
 #pragma once
+#include "tools.h"
 
-
-class ssd{
+class usb{
     public:
-        ssd(){
-            print("created ssd instance");
-        }
-        void clock(int loops){
-            
-        }
+    uint32_t start_addr;
+    uint32_t requierd_regs = 10;
+    usb(){
+
+    }
+    void clock(int loops){
+
+    }
 };
