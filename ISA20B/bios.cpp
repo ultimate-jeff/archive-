@@ -46,7 +46,7 @@ vector<uint32_t> readTextUints(const string& path) {
     return values;
 }
 
-vector<uint32_t> load_inst_to_mem(string path="bios_conf.txt"){
+vector<uint32_t> load_inst_to_mem(string path="bios_conf.txt",int main_core_id=0){
     vector<uint32_t> inst;
     inst = readTextUints(path);
     for(int i = 0; i < inst.size() ; i++){
@@ -56,7 +56,7 @@ vector<uint32_t> load_inst_to_mem(string path="bios_conf.txt"){
         }
         else{
             print("loading reg " + to_string(i+1) + " with " + to_string(inst[i])); // having errors with inst loading 
-            cores[0].mem.set_addr(i,inst[i]);
+            cores[main_core_id].mem.set_addr(i,inst[i]);
         }
     }
     cout_print_que();
@@ -131,7 +131,7 @@ int main(){
 
     Timer timer;
     timer.start_time();
-    vector<uint32_t> inst = load_inst_to_mem(conf["boot_path"]);
+    vector<uint32_t> inst = load_inst_to_mem(conf["boot_path"],conf["main_core_id"]);
 
     interface::init(&cores[port_core_id].mem);
     protocall::init();

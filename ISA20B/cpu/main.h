@@ -46,8 +46,8 @@ uint8_t offset_map[32] = {
     /*14      */ 0b100,
     /*15      */ 0b100,
     /*16      */ 0b110,
-    /*17      */ 0b110,
-    /*18      */ 0b110,
+    /*17      */ 0b000,
+    /*18      */ 0b010,
     /*19      */ 0b100,
     /*20      */ 0b100,
     /*21      */ 0b100,
@@ -98,7 +98,7 @@ public:
         &Core::jmp,
         &Core::jmp_ptr,
         &Core::stack,
-        &Core::unstack,
+        &Core::interupt,
         &Core::ADI,
         &Core::SDI,
         &Core::shift_u,
@@ -113,7 +113,7 @@ public:
         &Core::push_c,
         &Core::pull_c
     };
-    uint32_t spliting_map[32] = {0,1,2,2,2,2,2,3,3,3,3,3,3,2,3,1,1,3,3,2,2,3,3,2,1,0,2,3,2,2,0,0};
+    uint32_t spliting_map[32] = {0,1,2,2,2,2,2,3,3,3,3,3,3,2,3,1,1,0,3,2,2,3,3,2,1,0,2,3,2,2,0,0};
     
     Core(){
         this->core_id = Core::instances;
@@ -258,18 +258,12 @@ public:
             print("jumped to " + to_string(value));
         }
     }
-    void stack(uint32_t op[3]){ // t_reg , bottom_reg_D , top_reg_D : offsetM:111
-        uint32_t B_reg = mask(this->mem.get_addr(op[1]),b10_mask);
-        uint32_t T_reg = mask(this->mem.get_addr(op[2]),b10_mask);
-        uint32_t final_reg = B_reg | (T_reg << 10);
-        this->mem.set_addr(op[0],final_reg);
+    void stack(uint32_t op[3]){ // null
+        
     }
-    void unstack(uint32_t op[3]){ // t_reg , bottom_reg_D , top_reg_D : offsetM:111
-        uint32_t reg = this->mem.get_addr(op[0]);
-        uint32_t B_reg = mask(reg,b10_mask);
-        uint32_t T_reg = get_bit_section(reg,10,10);
-        this->mem.set_addr(op[1],B_reg);
-        this->mem.set_addr(op[2],T_reg);
+    void interupt(uint32_t op[3]){ // core_id, addr_ptr :offsetm:010
+        uint32_t sub_op[3] = {this->mem.get_addr(op[1]),0,0};
+        cores[mask(op[0],b5_mask)].call(sub_op);
     }
     
     void ADI(uint32_t op[3]){ // reg , data  : offsetM:100

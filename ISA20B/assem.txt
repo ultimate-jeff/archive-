@@ -1,68 +1,7 @@
 stall 0
+stall 0 
+hult 
+#int 32768
 stall 0
-jmp 49
-* 
-* 
-* 
-* 
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-* 
-stall 0
-stall 0
-stall 0
-stall 0
-stall 0
-stall 0
-stall 0
-stall 0
-stall 0
-stall 0
-stall 0
-stall 0
-stall 0
-stall 0
-push_c 16 12 2
-push_c 16 13 2
-push_c 16 11 2
-push_c 16 12 2
-cstate 2 5
-hult
+stall 0 
+hult 0
