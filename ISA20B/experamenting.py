@@ -39,8 +39,7 @@ op_map = [
     [5,10],
     [5,5,5],
     [5,5,5],
-    [5,5,5],
-    [15]
+    [5,5,5]
 ]
 # flags are >> true,zero,carry,overflow,sine
 # all regs are 20bit but only the botom 10 bit are data and then the next 5 bit is the flags and then the next 5 are not part of the data struct
@@ -82,7 +81,6 @@ opcode_map = [
     "soffmb",#offrf,core_id
     "push_c",#reg,t_reg,core_id
     "pull_c",#reg,t_reg,core_id
-    "int"
 ]
 class Syntax_checker:
     def __init__(self):

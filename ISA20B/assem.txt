@@ -1,7 +1,1 @@
-stall 0
-stall 0 
-hult 
-#int 32768
-stall 0
-stall 0 
-hult 0
+hult 15
