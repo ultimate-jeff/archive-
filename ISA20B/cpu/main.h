@@ -46,7 +46,7 @@ uint8_t offset_map[32] = {
     /*14      */ 0b100,
     /*15      */ 0b100,
     /*16      */ 0b110,
-    /*17      */ 0b000,
+    /*17      */ 0b111,
     /*18      */ 0b010,
     /*19      */ 0b100,
     /*20      */ 0b100,
@@ -113,7 +113,7 @@ public:
         &Core::push_c,
         &Core::pull_c
     };
-    uint32_t spliting_map[32] = {0,1,2,2,2,2,2,3,3,3,3,3,3,2,3,1,1,0,3,2,2,3,3,2,1,0,2,3,2,2,0,0};
+    uint32_t spliting_map[32] = {0,1,2,2,2,2,2,3,3,3,3,3,3,2,3,1,1,1,3,2,2,3,3,2,1,0,2,3,2,2,0,0};
     
     Core(){
         this->core_id = Core::instances;
@@ -145,7 +145,7 @@ public:
         uint32_t opcode = get_bit_section(this->curent_raw_inst,15,5);
         uint32_t format = this->spliting_map[opcode];
         //cout << "exacuting op " << opcode << " in core " << this->core_id <<endl;
-        print("exacuting op " + to_string(opcode) + " in core " + to_string(this->core_id));
+        print("exacuting op " + to_string(opcode) + " in core " + to_string(this->core_id) + " at address " + to_string(this->pc.counter));
         switch(format){
             case 0:
                 break;
@@ -191,7 +191,8 @@ public:
     //}
     void LR(uint32_t op[3]){ // reg , data
         uint32_t data = mask(op[1], b10_mask);
-        uint32_t flags = this->pu.alu.gen_flags(data, data, 0); // gen flags
+        uint32_t flags = 0;
+        print("loading reg " + to_string(op[0]) + " with " + to_string(data) + " and flags " + to_string(flags));
         uint32_t packed = (flags << 10) | data;
         this->mem.set_addr(op[0], packed);
     }
@@ -242,12 +243,12 @@ public:
         uint32_t raw_flags = get_bit_section(reg,10,5);
         uint32_t cmp_flags = mask(op[1], b5_mask);
         raw_flags ^= mask(op[2], b5_mask); // add invert mask
-        print("set do jmp to : " + to_string(this->do_jmp) + " and used cmp flags " + to_string(raw_flags) + " in reg");
-        this->do_jmp = (raw_flags & cmp_flags) != 0;// == cmp_flags;     != 0;
+        this->do_jmp = (raw_flags & cmp_flags) == cmp_flags;// == cmp_flags;     != 0;   >= 0;
+        print("set do_jmp to : " + to_string(this->do_jmp) + " and regester flags where " + to_string(raw_flags) + " and cmp flags where " + to_string(cmp_flags));
     }
     void jmp(uint32_t op[3]){ // address : offsetM:000
         if(this->do_jmp){
-            this->pc.jmp(op[0],this->do_jmp,false);
+            this->pc.jmp(op[0],this->do_jmp,false); // added -1 to ensure it jmp's to corect addr and this might have probs at addr 0
             print("jumped to " + to_string(op[0]));
         }
     }
@@ -259,7 +260,7 @@ public:
         }
     }
     void stack(uint32_t op[3]){ // null
-        
+        print("regester " + to_string(op[0]) + " has value " + to_string(mask(this->mem.get_addr(op[0]),b10_mask)));
     }
     void interupt(uint32_t op[3]){ // core_id, addr_ptr :offsetm:010
         uint32_t sub_op[3] = {this->mem.get_addr(op[1]),0,0};

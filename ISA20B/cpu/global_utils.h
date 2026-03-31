@@ -120,7 +120,7 @@ public:
                 // Push the NEXT instruction address as the return point
                 this->call_stack.call(this->counter); 
             }
-            this->counter = mask(addr, b12_mask);
+            this->counter = mask(addr-1, b12_mask);
         }
     }
     void ret() {

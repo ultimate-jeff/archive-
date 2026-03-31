@@ -102,7 +102,7 @@ class usb;
 void main_loop(Timer timer,int prints_per_tick = 8){
     cout << "starting program" << endl;
     timer.start_time();
-    int loops = 0;
+    int loops = -1;
     int active_cores = 1;
     while(active_cores >= 1){
         loops++;

@@ -1,268 +1,301 @@
-﻿
-import string
-import sys
-import os
+﻿import sys
 
+
+class Loger:
+    def __init__(self):
+        self.print_que = ""
+        self._errors = []
+        self._logs = []
+    def log(self,msg):
+        self._logs.append(msg+"\n")
+    def error(self,msg):
+        self._errors.append(msg+"\n")
+    def print_errors(self):
+        print("--------errors--------")
+        for msg in self._errors:
+            print(msg)
+    def print_log(self):
+        print("-------- logs --------")
+        for msg in self._logs:
+            print(msg)
+
+loger = Loger()
 reg_bit_size = 20
 reg_size = 2**reg_bit_size
 opcode_size = 5
 peramiter_size = 31
 op_map = [
-    [15],
-    [15],
-    [5,10],
-    [5,10],
-    [5,10],
-    [5,5],
-    [5,5],
-    [5,5,5],
-    [5,5,5],
-    [5,5,5],
-    [5,5,5],
-    [5,5,5],
-    [5,5,5],
-    [5,5],
-    [5,5,5],
-    [15],
-    [5,10],
-    [5,5,5],
-    [5,5,5],
-    [5,10],
-    [5,10],
-    [5,5,5],
-    [5,5,5],
-    [5,5,5],
-    [15],
-    [15],
-    [5,5,5],
-    [5,5,5],
-    [5,10],
-    [5,5,5],
-    [5,5,5],
-    [5,5,5]
+    [15],# 0
+    [15],# 1
+    [5,10],# 2
+    [5,10],# 3
+    [5,10],# 4
+    [5,5],# 5
+    [5,5],# 6
+    [5,5,5],# 7
+    [5,5,5],# 8
+    [5,5,5],# 9
+    [5,5,5],# 10
+    [5,5,5],# 11
+    [5,5,5],# 12
+    [5,5],# 13
+    [5,5,5],# 14
+    [15],# 15
+    [5,10],# 16
+    [15],# 17
+    [5,5,5],# 18
+    [5,10],# 19
+    [5,10],# 20
+    [5,5,5],# 21
+    [5,5,5],# 22
+    [5,5,5],# 23
+    [15],# 24
+    [15],# 25
+    [5,5,5],# 26
+    [5,5,5],# 27
+    [5,10],# 28
+    [5,5,5],# 29
+    [5,5,5],# 30
+    [5,5,5]# 31
 ]
-# flags are >> true,zero,carry,overflow,sine
-# all regs are 20bit but only the botom 10 bit are data and then the next 5 bit is the flags and then the next 5 are not part of the data struct
-# for instructions the top 5 bits are the opcode and then the botom 15 are the peramiters
-# the memory size is 2^12 or 4096 regs of shaird memory meaning instructions are in the same memory space as data so be carfle where u put ur data so that u dont exacute data as an instruction 
-# there are 4 offsets per core and 0th offset gose to the first peramiter then the 1th offset gose to the second peramiter and then the 2th offset gose to the third peramiter 
-# each op has a offset block map which sais which peramiters can use offsets and all reg peramiters use offsets but none of the data peramiters do and none of the core id peramiters use offsets eather 
+opcode_map = {
+    "hult":0,# none
+    "stall":1,#none
+    "lr":2,# reg data
+    "push":3,# reg t_reg
+    "pull":4,#reg t_reg
+    "push_ptr":5,#reg_ptr,t_reg_ptr
+    "pull_ptr":6,#reg_ptr,t_reg_ptr
+    "add":7,# reg_a,reg_b,reg_c
+    "sub":8,# reg_a,reg_b,reg_c
+    "and":9,# reg_a,reg_b,reg_c
+    "nand":10,# reg_a,reg_b,reg_c
+    "or":11,# reg_a,reg_b,reg_c
+    "xor":12,# reg_a,reg_b,reg_c
+    "move":13,#reg_ptr,t_reg_ptr
+    "cmp":14,#reg ,flags,invert_mask
+    "jmp":15,#address
+    "jmp_ptr":16,#address_ptr
+    "null":17,#t_reg
+    "intrp":18,#t_reg,bottom_reg,top_reg
+    "adi":19,# reg,data
+    "sdi":20,# rag,data
+    "shift_u":21,#reg_a,reg_b,reg_c
+    "shift_d":22,#reg_a,reg_b,reg_c
+    "cstate":23,#core_id, value > 0 == start core & value = 0 == stop core
+    "call":24,# address
+    "ret":25,#none
+    "ld_ptr":26,#t_reg,reg
+    "ld_off_ptr":27,#offset_reg,ptr_reg,r/w/ff
+    "ld_off":28,#offset_reg,data
+    "soffmb":29,#offrf,core_id
+    "push_c":30,#reg,t_reg,core_id
+    "pull_c":31,#reg,t_reg,core_id
+    # sudo instructions
+    "data":0
+}
 
-opcode_map = [
-    "hult",# none
-    "stall",#none
-    "lr",# reg data
-    "push",# reg t_reg
-    "pull",#reg t_reg
-    "push_ptr",#reg_ptr,t_reg_ptr
-    "pull_ptr",#reg_ptr,t_reg_ptr
-    "add",# reg_a,reg_b,reg_c
-    "sub",# reg_a,reg_b,reg_c
-    "and",# reg_a,reg_b,reg_c
-    "nand",# reg_a,reg_b,reg_c
-    "or",# reg_a,reg_b,reg_c
-    "xor",# reg_a,reg_b,reg_c
-    "move",#reg_ptr,t_reg_ptr
-    "cmp",#reg ,flags,invert_mask
-    "jmp",#address
-    "jmp_ptr",#address_ptr
-    "null",#t_reg,bottom_reg,top_reg
-    "intrp",#t_reg,bottom_reg,top_reg
-    "adi",# reg,data
-    "sdi",# rag,data
-    "shift_u",#reg_a,reg_b,reg_c
-    "shift_d",#reg_a,reg_b,reg_c
-    "cstate",#core_id, value > 0 == start core & value = 0 == stop core
-    "call",# address
-    "ret",#none
-    "ld_ptr",#t_reg,reg
-    "ld_off_ptr",#offset_reg,ptr_reg,r/w/ff
-    "ld_off",#offset_reg,data
-    "soffmb",#offrf,core_id
-    "push_c",#reg,t_reg,core_id
-    "pull_c",#reg,t_reg,core_id
-]
-class Syntax_checker:
-    def __init__(self):
-        self._errors = []
-        self._msgs = []
-    def error(self,msg):
-        #print(msg)
-        self._errors.append(msg)
-    def print_errors(self):
-        print("!!-- errors --!!")
-        for error in self._errors:
-            print(error)
-    def log(self,msg):
-        self._msgs.append(msg)
-    def print_log(self):
-        print("-- logs --")
-        for msg in self._msgs:
-            print(msg)
 class Util:
     def __init__(self):
         pass
-    def remove_coments(self,line):
+    def remove_coments(self,line,coment_char="#"):
         output_line = ""
         can_go = True
         for char in line:
-            if char != "#" and can_go:
-                output_line += char
-            elif char == "*" and can_go:
-                output_line = "hult 0"
-            elif char.isdigit():
+            if char != coment_char and can_go:
                 output_line += char
             else:
                 can_go = False
         return output_line
-loger = Syntax_checker()
 util = Util()
-
+       
+# "7 3 3 3" >> 343433434
 class Num_comp:
     def __init__(self):
         pass
-    def _encode_instruction(self,opcode, params, op_map, opcode_size=5,line_num=None):
-        instruction = opcode
-        layout = op_map[opcode]
-        total_param_bits = sum(layout)
-        instruction <<= total_param_bits
-        current_shift = total_param_bits
-        for i in range(len(layout)):
-            size = layout[i]
+    def _cont_to_int(self,l_text,line_num):
+        l_int = []
+        for text in l_text:
             try:
-                val = params[i]
+                l_int.append(int(text))
+            except ValueError:
+                loger.error(f"syntax error : there was {text} when was expecting type(int) on line {line_num}")
+                l_int.append(0)
+        return l_int
+    def _compile_inst(self,text,split_text,line_num):
+        try:
+            opcode = int(split_text[0])
+            instruction = opcode
+            layout = op_map[opcode]
+            total_param_bits = sum(layout)
+            instruction <<= total_param_bits
+            current_shift = total_param_bits
+            perams = split_text[1:]
+        except ValueError:
+            loger.error(f"syntax error : invalid opcode {split_text[0]}")
+
+        for i in range(len(layout)):
+            size = layout[i] 
+            try:
+                val = perams[i]
             except IndexError:
                 val = 0
-                if opcode_map[opcode] != "hult" and opcode_map[opcode] != "ret" and not (opcode_map[opcode] > 31):
-                    loger.error(f"error instruction on line {line_num} >> {opcode_map[opcode]} : peramiters where not filled in (filling peramiters with 0)")
+                loger.error(f"error instruction on line {line_num} >> {opcode_map[opcode]} : peramiters where not filled in (filling peramiters with 0)")
+
             max_val = (1 << size) - 1
             if val > max_val and opcode < peramiter_size:
-                loger.error(f"Error on line {line_num}: Parameter {i} for {opcode_map[opcode]} is {val}, which exceeds its {size}-bit limit (max {max_val})")
-
+                loger.error(f"Error on line {line_num}: Parameter {i} for {opcode_map[opcode]} is {val}, which exceeds its {size}-bit limit (max {max_val}) : setting value to max")
+                val = max_val
             current_shift -= size
             instruction |= (val << current_shift)
-            if instruction > reg_size:
-                loger.error(f"error overflow on line {line_num}: instruction compiled over {reg_bit_size} bit limit (croping data to fit)")
-                instruction = instruction & (2**reg_bit_size)-1
-        return instruction
-    def _llnum_comp_line(self,text,line_num):
-        text = text.split()
-        instruction = []
-        for char in text:
-            try:
-                value = int(char)
-                instruction.append(value)
-            except ValueError:
-                loger.error(f"syntax error on line {line_num}: trying to use invalid chars where intagers should have been")
 
-        final_ints = self._encode_instruction(instruction[0],instruction[1:],op_map,opcode_size,line_num=line_num)
-        return final_ints
-    def comp(self,text):
-        instructios = []
-        tspl = text.splitlines()
-        for line in tspl:
-            line_num = tspl.index(line)+1
-            instructios.append(self._llnum_comp_line(line,line_num))
-        return instructios
+            if instruction > reg_size:
+                loger.error(f"error overflow on line {line_num}: instruction compiled over {reg_bit_size} bit limit")
+
+        return instruction
+    
+    def comp(self,text:str):
+        sltext = text.splitlines()
+        instrructions = []
+        t_inst = ""
+        line_num = -1
+        for line in sltext: # loops over every line
+            line_num += 1
+            split_text = line.split() # gets split text
+            try:
+                if len(split_text) <= 1:# manual load
+                    instrructions.append(int(split_text[0]))
+                else:
+                    instrructions.append(int(self._compile_inst(line,self._cont_to_int(split_text,line_num),line_num)))
+            except ValueError:
+                pass
+            except Exception as e:
+                print(e)
+            else:
+                pass
+        return instrructions
+
+class keyWord_handeler:
+    def __init__(self):
+        self.keywords = {
+            "!!":self._togle_running,
+            ">>":self._shift_program
+        }
+        self.keyword_type = {
+            "!!":"char",
+            ">>":"line"
+        }
+    def remove_keywords(self,line,keyword):
+        new_line = ""
+        keyword_type = self.keyword_type.get(keyword,None)
+        if keyword_type == "char":
+            new_line = line.replace(keyword,"")
+        elif keyword_type == "line":
+            new_line = "0\n"
+        else:
+            new_line = line
+        return new_line
+    def find_keyword(self,line,line_num):
+        for key in self.keywords:
+            if key in line:
+                return key
+        return None
+    def run_keyword(self,key,line,line_num,comp):
+        func = self.keywords.get(key,None)
+        if func != None:
+            line = func(line,line_num,comp)
+        return line
+
+    def _togle_running(self,line,line_num,comp):
+        comp.running = not comp.running
+        loger.log(f"toggled compalation to {comp.running} on line {line_num} (replacing with opcode 0 / hult)")
+        return "0\n"
+    def _shift_program(self,line,line_num,comp):
+        try:
+            shift_amount = line.split()[1]
+            shift_amount = int(shift_amount)
+        except ValueError:
+            loger.error(f"syntax error : invalid shift amount {shift_amount} on line {line_num} (filling shift amount with 0)")
+            shift_amount = 0
+        except IndexError:
+            loger.error(f"syntax error : no shift amount provided on line {line_num} (filling shift amount with 0)")
+            shift_amount = 0
+        comp.total_shift = shift_amount-1
+        return line
 
 class Char_comp:
     def __init__(self):
-        pass
-    def _remove_coments(self,line):
-        output_line = ""
-        can_go = True
-        for char in line:
-            if char != "#" and can_go:
-                output_line += char
-            else:
-                can_go = False
-        return output_line
-
-    def comp(self,text):
-        Instruction = ""
-        instructions = []
-        tspv = text.splitlines()
-        for line_num, line in enumerate(tspv, start=1):
-            try:
-                line = self._remove_coments(line)
-                split_line = line.split()
-                if line[0] == "!" and line[1] == "!":
-                    loger.log(f"ending_compalation on line {line_num}")
-                    break
-                elif line[0] == "*":
-                    split_line.clear()
-                    split_line.append("hult")
-                opcode = opcode_map.index(split_line[0])# potentioal for invalid opcode
-            except IndexError:
-                loger.log(f"line {line_num} is empty (skiping copalation of line) ")
-            except ValueError:
-                if split_line[0].isdigit():
-                    pass
-                    #print(f"compiled: {line}")
-                    #split_line[0] = str(opcode)
-                    #new_line = " ".join(split_line)
-                    #Instruction += new_line+"\n"
-                else:
-                    loger.error(f"syntax error on line {line_num} : invalid opcode )")
-            except Exception as e:
-                loger.error(f"syntax error {e} on line {line_num} (oh crap, you're doomed)")
-            else:
-                print(f"compiled: {line}")
-                split_line[0] = str(opcode)
-                new_line = " ".join(split_line)
-                Instruction += new_line+"\n"
-        return Instruction
-
-
-class Resoving_comp:
-    def comp(self, text):
-        Instruction = ""
-        instructions = []
-        lines = text.splitlines()
-        index = 0
-        self.line_num = 1
-        while index < len(lines) and self.running:
-            line = lines[index]
-            line = util.remove_coments(line)
-            split_line = line.split()
-            try:
-                opcode = opcode_map.index(split_line[0])
-            except Exception as e:
-                pass
-            else:
-                print(f"compiled: {line}")
-                split_line[0] = str(opcode)
-                new_line = " ".join(split_line)
-                Instruction += new_line+"\n"
-                
-            self.line_num += 1
-            index += 1
-        return Instruction
-
-    def end_comp(self):
-        loger.log(f"ending_compalation on line {self.line_num}")
-        self.running = False
-
-    def __init__(self):
+        self.init()
+        self.kwark = keyWord_handeler()
+        
+    def init(self):
         self.running = True
-       
+        self.total_shift = 0
+    def _apply_shift(self,line,line_num):
+        new_line = ""
+        if self.total_shift > 0:
+            new_line = "0\n" * self.total_shift
+            self.total_shift = 0
+            loger.log(f"applied program shift of {self.total_shift} on line {line_num}")
+            return new_line
+        else:
+            return new_line
+
+    def _decode_opcode(self,text,line_num,split_line):
+            opcode = opcode_map.get(split_line[0],None)
+            if opcode == None:
+                opcode = 0
+                loger.error(f"syntax error : invalid opcode {split_line[0]} on line {line_num} (replacing opcode with opcode {opcode})")
+            return opcode
+    def _main_comp(self,line,line_num):
+        line = util.remove_coments(line)
+        split_line = line.split()
+        opcode = None
+        if line == "":
+            loger.log(f"line {line_num} is empty (filling it with 0)")
+            split_line = ["0"]
+        elif not split_line[0].isdigit():
+            opcode = str(self._decode_opcode(line,line_num,split_line))
+            split_line[0] = opcode
+        else:
+            split_line = [split_line[0]]
+        return " ".join(split_line)+"\n"
+    
+    def comp(self,text:str):
+        self.init()
+        lines = text.splitlines()
+        instructions = ""
+        for line_num, line in enumerate(lines, start=1):
+            if self.running:
+                keyword = self.kwark.find_keyword(line,line_num)
+                if keyword:
+                    line = self.kwark.run_keyword(keyword,line,line_num,self)
+                    line = self.kwark.remove_keywords(line,keyword)
+                print(f"compiled line {line_num} : {line}")
+                instructions += self._main_comp(line,line_num)
+                instructions += self._apply_shift(line,line_num)
+        return instructions
 
 def ccomp(text):
     global loger
-    resolver = Resoving_comp()
-    char_comp = Char_comp()
     num_comp = Num_comp()
-
-    #result = resolver.comp(text)
+    char_comp = Char_comp()
+    #result = num_comp.comp(text)
+    #result = char_comp.comp(text)
     result = num_comp.comp(char_comp.comp(text))
-    print("----------")
+    text_out = ""
     for line in result:
-        print(f"{line}")
-    print("----------")
-    #print(idk2.comp(text))
+        print(line)
+        text_out += str(line)+"\n"
     print()
+    try:
+        with open("ISA20B/boot.txt","w") as f:
+            f.write(text_out)
+    except Exception as e:
+        print(f"error writing to file : {e}")
     loger.print_errors()
     loger.print_log()
+
 
 if __name__ == "__main__":
     # Check if a file path was passed as an argument
@@ -292,26 +325,3 @@ else:
     ccomp(text)
 
 # python dir PS C:\Users\matth\AppData\Local\Programs\Python\Python313>        
-"""
-#include <iostream>
-#include <vector>
-#include <fstream>
-#include <cstdint>
-
-std::vector<std::uint32_t> readTextUints(const std::string& path) {
-    std::ifstream file(path);
-    std::vector<std::uint32_t> values;
-    
-    if (!file.is_open()) {
-        return values; // Or handle error
-    }
-
-    std::uint32_t val;
-    while (file >> val) {
-        values.push_back(val);
-    }
-
-    return values;
-}
-
-"""
