@@ -45,7 +45,7 @@ uint8_t offset_map[32] = {
     /*13      */ 0b100,
     /*14      */ 0b100,
     /*15      */ 0b100,
-    /*16      */ 0b110,
+    /*16      */ 0b100,
     /*17      */ 0b111,
     /*18      */ 0b010,
     /*19      */ 0b100,
@@ -62,6 +62,11 @@ uint8_t offset_map[32] = {
     /*30      */ 0b110,
     /*31      */ 0b110
 };
+struct log_entry{
+    uint32_t pc;
+    uint32_t opcode;
+    uint32_t code_id;
+};
 
 class Core;
 extern Core cores[8];
@@ -69,15 +74,15 @@ class Core{
 public:
     uint32_t curent_offmb = 0;
     uint32_t core_id;
-    static uint32_t instances;
     uint32_t core_addr;
+    uint32_t curent_raw_inst = 0;
+    uint32_t stall_ticks = 0;
+    static uint32_t instances;
     Memory mem;
     PU pu;
     PC pc;
-    uint32_t curent_raw_inst = 0;
     bool running = true;
     bool do_jmp = true;
-    uint32_t stall_ticks = 0;
     using Instr = void (Core::*)(uint32_t[3]);
     vector<Instr> op_methods = {
         &Core::HULT,
@@ -144,39 +149,59 @@ public:
         this->get_curent_inst(this->pc.counter);
         uint32_t opcode = get_bit_section(this->curent_raw_inst,15,5);
         uint32_t format = this->spliting_map[opcode];
-        //cout << "exacuting op " << opcode << " in core " << this->core_id <<endl;
         print("exacuting op " + to_string(opcode) + " in core " + to_string(this->core_id) + " at address " + to_string(this->pc.counter));
         switch(format){
             case 0:
                 break;
             case 1:
-                op[0] = get_bit_section(this->curent_raw_inst,0,15);
-                op[0] = this->add_offset(op[0],0,opcode);// add offset
+                this->decode_format_1(op,this->curent_raw_inst,opcode,this);
                 break;
-
             case 2:
-                /*
-                op[0] = get_bit_section(this->curent_raw_inst, 5, 5);   // Reads bits 5-9
-                op[1] = get_bit_section(this->curent_raw_inst, 10, 10);
-                */
-                op[0] = get_bit_section(this->curent_raw_inst, 10, 5); // Register (Bits 10-14)
-                op[1] = get_bit_section(this->curent_raw_inst, 0, 10);
-                op[0] = this->add_offset(op[0],0,opcode);// add offset
-                op[1] = this->add_offset(op[1],1,opcode);// add offset
+                this->decode_format_2(op,this->curent_raw_inst,opcode,this);
                 break;
-
             case 3:
-                op[0] = get_bit_section(this->curent_raw_inst,10,5);
-                op[1] = get_bit_section(this->curent_raw_inst,5,5);
-                op[2] = get_bit_section(this->curent_raw_inst,0,5);
-                op[0] = this->add_offset(op[0],0,opcode);// add offset
-                op[1] = this->add_offset(op[1],1,opcode);// add offset
-                op[2] = this->add_offset(op[2],2,opcode);// add offset
+                this->decode_format_3(op,this->curent_raw_inst,opcode,this);
                 break;
         }
 
-        Instr func = op_methods[opcode];
-        (this->*func)(op);
+        //Instr func = op_methods[opcode];
+        //(this->*func)(op);
+        switch (opcode)
+        {
+        case 0:this->HULT(op);break;
+        case 1:this->stall(op);break;
+        case 2:this->LR(op);break;
+        case 3:this->push(op);break;
+        case 4:this->pull(op);break;
+        case 5:this->pull_ptr(op);break;
+        case 6:this->push_ptr(op);break;
+        case 7:this->add(op);break;
+        case 8:this->sub(op);break;
+        case 9:this->AND(op);break;
+        case 10:this->NAND(op);break;
+        case 11:this->OR(op);break;
+        case 12:this->XOR(op);break;
+        case 13:this->MOVE(op);break;
+        case 14:this->cmp(op);break;
+        case 15:this->jmp(op);break;
+        case 16:this->jmp_ptr(op);break;
+        case 17:this->stack(op);break;
+        case 18:this->interupt(op);break;
+        case 19:this->ADI(op);break;
+        case 20:this->SDI(op);break;
+        case 21:this->shift_u(op);break;
+        case 22:this->shift_d(op);break;
+        case 23:this->cstate(op);break;
+        case 24:this->call(op);break;
+        case 25:this->ret(op);break;
+        case 26:this->ld_ptr(op);break;
+        case 27:this->ldoffm_ptr(op);break;
+        case 28:this->LD_off(op);break;
+        case 29:this->SoffmB(op);break;
+        case 30:this->push_c(op);break;
+        case 31:this->pull_c(op);break;
+        default:this->HULT(op);break;
+        }
         this->clock();
     }
 
@@ -233,16 +258,14 @@ public:
         this->mem.set_addr(op[2],this->pu.XOR(mem.get_addr(op[0]),mem.get_addr(op[1])));
     }
     void MOVE(uint32_t op[3]){ // : offsetM:111
-        uint32_t src_reg = ptr_ld(op[0]);
-        uint32_t dst_reg = ptr_ld(op[1]);
-        uint32_t value = mem.get_addr(src_reg);
-        mem.set_addr(dst_reg, value);
+        uint32_t value = mem.get_addr(ptr_ld(op[0]));
+        mem.set_addr(ptr_ld(op[1]), value);
     }
     void cmp(uint32_t op[3]){ // reg , flags , invert_mask : offsetM:100
-        uint32_t reg = this->mem.get_addr(op[0]);
-        uint32_t raw_flags = get_bit_section(reg,10,5);
-        uint32_t cmp_flags = mask(op[1], b5_mask);
-        raw_flags ^= mask(op[2], b5_mask); // add invert mask
+        //uint32_t reg = this->mem.get_addr(op[0]);
+        uint32_t raw_flags = get_bit_section(this->mem.get_addr(op[0]),10,5);
+        uint32_t cmp_flags = (op[1] & b5_mask);
+        raw_flags ^= (op[2] & b5_mask); // add invert mask
         this->do_jmp = (raw_flags & cmp_flags) == cmp_flags;// == cmp_flags;     != 0;   >= 0;
         print("set do_jmp to : " + to_string(this->do_jmp) + " and regester flags where " + to_string(raw_flags) + " and cmp flags where " + to_string(cmp_flags));
     }
@@ -252,7 +275,7 @@ public:
             print("jumped to " + to_string(op[0]));
         }
     }
-    void jmp_ptr(uint32_t op[3]){ // addr_ptr : offsetM:111
+    void jmp_ptr(uint32_t op[3]){ // addr_ptr , flags(jmp/call): offsetM:101
         uint32_t value = this->ptr_ld(op[0]);
         if(this->do_jmp){
             this->pc.jmp(value,this->do_jmp,false);
@@ -291,8 +314,8 @@ public:
         this->pc.ret();
     }
     void ld_ptr(uint32_t op[3]){ // t_reg , reg : offsetM:111
-        uint32_t addr = this->mem.get_addr(op[1]); // get value of reg
-        uint32_t value = this->mem.get_addr(addr);
+        //uint32_t addr = this->mem.get_addr(op[1]); // get value of reg
+        uint32_t value = this->mem.get_addr(this->mem.get_addr(op[1]));
         this->mem.set_addr(op[0],value);
     }
     void ldoffm_ptr(uint32_t op[3]){ // offset_reg_ptr , ptr_reg  : offsetM:111
@@ -314,6 +337,23 @@ public:
 private:
     uint32_t ptr_ld(uint32_t addr){
         return this->mem.get_addr(addr);
+    }
+    inline __attribute__((always_inline)) void decode_format_1(uint32_t * op, uint32_t curent_raw_inst, uint32_t opcode, Core* cpu){
+        op[0] = cpu->add_offset(get_bit_section(curent_raw_inst,0,15),0,opcode);// add offset
+    }
+    inline __attribute__((always_inline)) void decode_format_2(uint32_t * op, uint32_t curent_raw_inst, uint32_t opcode, Core* cpu){
+        //op[0] = get_bit_section(curent_raw_inst, 10, 5); // Register (Bits 10-14)
+        //op[1] = get_bit_section(curent_raw_inst, 0, 10);
+        op[0] = cpu->add_offset(get_bit_section(curent_raw_inst, 10, 5),0,opcode);// add offset
+        op[1] = cpu->add_offset(get_bit_section(curent_raw_inst, 0, 10),1,opcode);// add offset
+    }
+    inline __attribute__((always_inline)) void decode_format_3(uint32_t * op, uint32_t curent_raw_inst, uint32_t opcode, Core* cpu){
+        //op[0] = get_bit_section(curent_raw_inst,10,5);
+        //op[1] = get_bit_section(curent_raw_inst,5,5);
+        //op[2] = get_bit_section(curent_raw_inst,0,5);
+        op[0] = cpu->add_offset(get_bit_section(curent_raw_inst,10,5),0,opcode);// add offset
+        op[1] = cpu->add_offset(get_bit_section(curent_raw_inst,5,5),1,opcode);// add offset
+        op[2] = cpu->add_offset(get_bit_section(curent_raw_inst,0,5),2,opcode);// add offset
     }
 };
 
@@ -353,4 +393,12 @@ void start_cpu(){
     }
     cout << "program ended" << endl;
 }
+
+
+/*
+put befor to copy paste instead of
+    inline __attribute__((always_inline))   
+
+
+*/
 

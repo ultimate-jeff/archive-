@@ -1,11 +1,6 @@
-jmp 10
-
-
-ret
+lr 10 500
 stall 0
-add 2 2 2
-cmp 2 17 0
-jmp 4
-call 5
-lr 2 1
-call 5
+sdi 10 1
+cmp 10 3 2
+null 10
+jmp 2

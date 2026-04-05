@@ -66,37 +66,44 @@ vector<uint32_t> load_inst_to_mem(string path="bios_conf.txt",int main_core_id=0
 class ram;
 class ssd;
 class usb;
+class Display;
 #if __has_include("components/ssd.h")
     #include "components/ssd.h"
-    #define HAS_SSD1 1.0
+    #define HAS_SSD1 1
 #else
-    #define HAS_SSD1 0.0
+    #define HAS_SSD1 0
 #endif
 #if __has_include("components/ssd.h")
     #include "components/ssd.h"
-    #define HAS_SSD2 1.0
+    #define HAS_SSD2 1
 #else
-    #define HAS_SSD2 0.0
+    #define HAS_SSD2 0
 #endif
 
 #if __has_include("components/ram.h")
     #include "components/ram.h"
-    #define HAS_RAM1 1.0
+    #define HAS_RAM1 1
 #else 
-    #define HAS_RAM1 0.0
+    #define HAS_RAM1 0
 #endif
 #if __has_include("components/ram.h")
     #include "components/ram.h"
-    #define HAS_RAM2 1.0
+    #define HAS_RAM2 1
 #else 
-    #define HAS_RAM2 0.0
+    #define HAS_RAM2 0
 #endif
 
 #if __has_include("components/usb_controlor.h")
     #include "components/usb_controlor.h"
-    #define HAS_USB 1.0
+    #define HAS_USB 1
 #else
-    #define HAS_USB 0.0
+    #define HAS_USB 0
+#endif
+#if __has_include("components/display.h")
+    #include "components/display.h"
+    #define HAS_DISPLAY 1
+#else
+    #define HAS_DISPLAY 0
 #endif
 
 void main_loop(Timer timer,int prints_per_tick = 8){
@@ -115,14 +122,16 @@ void main_loop(Timer timer,int prints_per_tick = 8){
     }
     cout_print_que();
     cout << "program ended" << endl;
-    cout << "program took " << timer.get_time() << " milliseconds " << endl;
+    double t = timer.get_time();
+    cout << "program took " << t << " milliseconds " << endl;
+    int cps = loops/(t/1000);
+    cout << "the cps was " << cps << endl;
 }
 
 
 void create_device_instances(){
     
 }
-
 int main(){
 
     json conf = load_config("config/bios_config.json");
@@ -136,21 +145,24 @@ int main(){
     interface::init(&cores[port_core_id].mem);
     protocall::init();
     // create_device_instances
-    if(HAS_RAM1 > 0.9){
+    #if HAS_RAM1
         ram ram1;
-    }
-    if(HAS_RAM2 > 0.9){
+    #endif
+    #if HAS_RAM2
         ram ram2;
-    }
-    if(HAS_SSD1 > 0.9){
+    #endif
+    #if HAS_SSD1
         ssd ssd1;
-    }
-    if(HAS_SSD2 > 0.9){
+    #endif
+    #if HAS_SSD2 
         ssd ssd2;
-    }
-    if(HAS_USB > 0.9){
+    #endif
+    #if HAS_USB
         usb usb1;
-    }
+    #endif
+    #if HAS_DISPLAY
+        Display display1;
+    #endif
     // -----------
 
     cout << "loading data to memory took " << timer.get_time() << " milliseconds" << endl;
@@ -160,11 +172,15 @@ int main(){
     return 0;
 }
 /*
+compile command:   cd "ISA20B"; g++ bios.cpp -o bios -lsfml-graphics -lsfml-window -lsfml-system
 
-load prosesor with initilazation code
+or : 
 
-initialize devices
+    cd "c:\Users\matth\.c\proj1\ISA20B\" ; if ($?) { g++ bios.cpp -o bios -lsfml-graphics -lsfml-window -lsfml-system } ; if ($?) { .\bios }
 
-start the prosesor
+    cd "c:\Users\matth\.c\proj1\ISA20B\" ; if ($?) { g++ -O3 bios.cpp -o bios -lsfml-graphics -lsfml-window -lsfml-system } ; if ($?) { .\bios }    
 
+
+
+    cd "c:\Users\matth\.c\proj1\ISA20B\" ; if ($?) { g++ -O3 -march=native -flto -fomit-frame-pointer -funroll-loops bios.cpp -o bios -lsfml-graphics -lsfml-window -lsfml-system } ; if ($?) { .\bios }
 */

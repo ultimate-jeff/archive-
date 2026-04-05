@@ -28,13 +28,13 @@ const uint32_t b15_mask = 0x7FFF;
 const uint32_t b8_mask = 0xFF;
 const uint32_t b3_mask = 0x7;
 
-uint32_t sine_mask(uint32_t mask){
+inline __attribute__((always_inline)) uint32_t sine_mask(uint32_t mask){
     return (mask + 1) >> 1;
 };
-uint32_t mask(uint32_t value, uint32_t mask){
+inline __attribute__((always_inline)) uint32_t mask(uint32_t value, uint32_t mask){
     return value & mask;
 };
-uint32_t get_bit_section(uint32_t value, uint32_t start_bit, uint32_t num_bits){
+inline  __attribute__((always_inline)) uint32_t get_bit_section(uint32_t value, uint32_t start_bit, uint32_t num_bits){
     uint32_t m = (1 << num_bits) - 1;
     return (value >> start_bit) & m;
 };
@@ -46,8 +46,8 @@ int32_t conv_to_int(uint32_t value, uint32_t mask){
         return (int32_t)(value - (1u << width));
     return (int32_t)value;
 }
-void print(string msg){
-    print_que += (msg + "\n");
+inline __attribute__((always_inline)) void print(string msg){
+    //print_que += (msg + "\n");
 }
 void cout_print_que(){
     cout << print_que;
@@ -66,23 +66,6 @@ public:
             this->stack.push_back(value);
         }
     }
-    /*
-    uint32_t get_top(bool pop = true){
-        uint32_t value;
-        if(pop){
-            value = this->stack.front();
-            this->stack.erase(this->stack.begin());
-        }
-        else {
-            value = this->stack.front();
-        }
-        return value;
-    }
-    void call(uint32_t addr){
-        addr = mask(addr,b12_mask);
-        this->stack.push_back(addr);
-    }
-    */
    uint32_t get_top(bool pop = true) {
         if (stack.empty()) return 0;
         uint32_t value = stack.back(); // Use back() for LIFO
@@ -90,7 +73,7 @@ public:
         return value;
     }
 
-    void call(uint32_t return_addr) {
+    inline __attribute__((always_inline)) void call(uint32_t return_addr) {
         stack.push_back(mask(return_addr, b12_mask));
     }
 
@@ -105,14 +88,10 @@ public:
 
     PC(){};
     void on_clock(){
-        if(this->ret_on_clock){
-            this->ret();
-        }
     }
-    void clock(){
-        this->counter++;
-        this->counter = mask(this->counter,b12_mask);
-        this->on_clock();
+    inline __attribute__((always_inline)) void clock(){
+        this->counter = ((this->counter+1) & b12_mask);
+        //this->on_clock();
     };
     void jmp(uint32_t addr, bool do_jmp, bool do_call = false) {
         if (do_jmp) {
@@ -123,7 +102,7 @@ public:
             this->counter = mask(addr-1, b12_mask);
         }
     }
-    void ret() {
+    inline __attribute__((always_inline)) void ret() {
         this->counter = this->call_stack.get_top(true);
     }
 };

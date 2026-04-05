@@ -19,31 +19,25 @@ public:
             this->mem[i] = value;
         }
     }
-    uint32_t get_abs_addr(uint32_t addr){
-        addr = mask(addr, b5_mask);
-        return this->mem[addr];
+    inline __attribute__((always_inline))  uint32_t get_abs_addr(uint32_t addr){
+        return this->mem[(addr & b5_mask)];
     }
-    void set_abs_addr(uint32_t addr, uint32_t value){
-        addr = mask(addr, b5_mask);
-        this->mem[addr] = value;
+    inline __attribute__((always_inline))  void set_abs_addr(uint32_t addr, uint32_t value){
+        this->mem[(addr & b5_mask)] = value;
     }
-    uint32_t  get_addr(uint32_t offset ,uint32_t core_addir){
-        offset = mask(offset, b5_mask);
-        core_addir = mask(core_addir, b5_mask);
-        return this->mem[offset + core_addir ];
+    inline __attribute__((always_inline))  uint32_t  get_addr(uint32_t offset ,uint32_t core_addir){
+        return this->mem[(offset & b5_mask) + (core_addir & b5_mask)];
     }
-    void set_addr(uint32_t offset ,uint32_t core_addir, uint32_t value){
-        offset = mask(offset, b5_mask);
-        core_addir = mask(core_addir, b5_mask);
-        this->mem[offset + core_addir ] = value;
+    inline __attribute__((always_inline))  void set_addr(uint32_t offset ,uint32_t core_addir, uint32_t value){
+        this->mem[(offset & b5_mask) + (core_addir & b5_mask) ] = value;
     }
-    uint32_t gen_core_addr(uint32_t offset, uint32_t core_id){
-        offset = mask(offset, b5_mask);
-        core_id = mask(core_id, b4_mask);
+    inline __attribute__((always_inline))  uint32_t gen_core_addr(uint32_t offset, uint32_t core_id){
+        offset = offset & b5_mask;
+        core_id = core_id & b4_mask;
         return offset + (core_id * offsets_per_core);
     }
-    uint32_t get_core_addir(uint32_t core_id){
-        core_id = mask(core_id, b5_mask);
+    inline __attribute__((always_inline))  uint32_t get_core_addir(uint32_t core_id){
+        core_id = core_id & b5_mask;
         return core_id * offsets_per_core;
     }
 };
@@ -52,12 +46,14 @@ class Memory {
 public:
     //vector<vector<bool>> mem;
     static const uint32_t Bmask = b20_mask;
-    static const uint32_t Amask = b12_mask;
-    //uint32_t mem[4096];
+    static const uint32_t addr_mask = b12_mask;
     vector<uint32_t> mem;
+    //uint32_t* mem;
     uint32_t core_id;
     int instances = 0;
     Memory(uint32_t core_id = -1): mem(4096,0){
+        //mem = new uint32_t[4096]();
+
         if (core_id == -1){
             this->core_id = Memory::instances;
         } else {
@@ -77,23 +73,19 @@ public:
     };
     uint32_t mask_addr(uint32_t value){
         // creates the 12 bit value
-        return value & this->Amask;
+        return value & this->addr_mask;
     };
-    uint32_t get_addr(uint32_t addr){
-        addr = this->mask_addr(addr);
-        return this->mem[addr];
+    inline __attribute__((always_inline))uint32_t get_addr(uint32_t addr){
+        return this->mem[addr & this->addr_mask];
     };
-    void set_addr(uint32_t addr, uint32_t value){
-        addr = this->mask_addr(addr);
-        this->mem[addr] = this->mask(value);
+    inline __attribute__((always_inline))void set_addr(uint32_t addr, uint32_t value){
+        this->mem[addr & this->addr_mask] = value & b20_mask;
     };
     // i love c++
-    void load_reg(uint32_t addr, uint32_t value, uint32_t offsets){
-        addr += offsets;
-        this->set_addr(addr, value);
+    inline __attribute__((always_inline))void load_reg(uint32_t addr, uint32_t value, uint32_t offsets){
+        this->mem[(addr+offsets) & this->addr_mask] = value & b20_mask;//this->set_addr(addr, value);
     };
-    uint32_t read_reg(uint32_t addr, uint32_t offsets){
-        addr += offsets;
-        return this->get_addr(addr);
+    inline __attribute__((always_inline))uint32_t read_reg(uint32_t addr, uint32_t offsets){
+        return this->mem[(addr+offsets) & this->addr_mask];//return this->get_addr(addr);
     };
 };

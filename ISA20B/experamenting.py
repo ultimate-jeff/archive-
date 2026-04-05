@@ -92,7 +92,9 @@ opcode_map = {
     "push_c":30,#reg,t_reg,core_id
     "pull_c":31,#reg,t_reg,core_id
     # sudo instructions
-    "data":0
+    "data":0,
+    "interupt":18,
+    "rc":18
 }
 
 class Util:
@@ -324,4 +326,70 @@ else:
         text = f.read()
     ccomp(text)
 
-# python dir PS C:\Users\matth\AppData\Local\Programs\Python\Python313>        
+# cd "ISA20B";./bios    
+# 
+"""
+flags; > flags are only set after an ALU op  and the output regester of the alu holds the flags
+    True :place_value(1) > this flag is alwase set to true
+    zerro :place_value(2)
+    carry :place_value(4)
+    overflow :place_value(8)
+    sine :place_value(16)
+data_reg_format;
+    00000(unalocated),00000(flags),0000000000(data)
+    > the top 5 bits are unalocated so if a data reg is exacuted then it interprets to a hult stoping the program befor anything unwanted can happpen
+    > the next 5 are the flags so each reg holds its own flags so its kindu like a history althow the flags get regenarated after every alu op
+
+
+G20 ISA;
+    opcode5bit : peramiters(bit_count).. > description/data
+    00:hult : None(15)
+    01:stall :none(15) > nop instruction
+    02:lr : reg(5),data(10) 
+    03:push : reg(5),addr(10)
+    04:pull :reg(5),addr(10)
+    05:push_ptr :reg(5),reg_ptr(5)
+    06:pull_ptr :reg(5),reg_ptr(5)
+    07:add : reg_a(5) ,reg_B(5) , out_reg(5)
+    08:sub : reg_a(5) ,reg_B(5) , out_reg(5)
+    09:and : reg_a(5) ,reg_B(5) , out_reg(5)
+    10:nand : reg_a(5) ,reg_B(5) , out_reg(5)
+    11:or : reg_a(5) ,reg_B(5) , out_reg(5)
+    12:xor : reg_a(5) ,reg_B(5) , out_reg(5)
+    13:move : reg_ptr(5),t_reg_ptr(5)
+    14:cmp : reg(5),flags(5),invert_mask(5)
+    15:jmp : addr(15)
+    16:jmp_ptr : addr_ptr(5)
+    17:null : None(15)
+    18:interupt / rc : core_id(5),addr_ptr(5) > rc stands for Romote Call so core 0 can foce core 3 to call a functions/addr
+    19:adi :reg(5),value(10)
+    20:sdi :reg(5),value(10)
+    21:shift_u :reg_a(5),reg_b(5),reg_c(5) > one of ther b or c regs os the amount i just forgot 
+    22:shift_d :reg_a(5),reg_b(5),reg_c(5) > one of ther b or c regs os the amount i just forgot 
+    23:cstate :core_id(5),state(5) > if state > 0 then the core is activated else it is disactivated
+    24:call :addr(15) > the address space is 12 bit so not the full 15 bit band width is used
+    25:ret :none(15) > returns to the address put on the call stack by the last call 
+    26:ld_ptr : t_reg(5),reg(5)
+    27:ldoff_ptr : offset_reg(5),ptr_reg(5)
+    28:ld_off : offset_reg(5),data(10)
+    29:soffmb : offmb(5),core_id(5)
+    30:push_c :reg(5),t_reg(5),core_id(5) < pushes data from curent core to a nuther core and same with pull_c
+    31:pull_c :reg(5),t_reg(5),core_id(5)
+
+offsets;
+> there are 8 offset memory banks and each bank has 32 offsets 
+> each core has an offset memory bank that it is curently using aka active bank
+> each core gets 4 offsets out of the 32 
+> offset 0 for the curent core gose to peramiter 1 and offset 1 gose to peramiter 2 and so on (excluding offset 3 bc that is unused / saved for later )
+> some peramiters dont acsept offsets but all reg(5) peramiters do and no data(10) peramiter take offsets and core_id peramiters dont and abs addr peramiter like addr(15) dont
+
+
+call_stack;
+>call sack has a reseion depth of 256
+
+memory_layout;
+> each core gets 2^12 general Von Numman regesters 
+> there is no stack but there are offsets
+> there is a dedicated port core
+
+"""   
