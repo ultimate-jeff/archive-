@@ -1,3 +1,7 @@
+
+
+#define ENABLE_DEBUG_PRINT 1
+
 #include <iostream>
 #include <ctime>
 #include <fstream>
@@ -175,8 +179,7 @@ int main(){
 compile command:   cd "ISA20B"; g++ bios.cpp -o bios -lsfml-graphics -lsfml-window -lsfml-system
 
 or : 
-
-    cd "c:\Users\matth\.c\proj1\ISA20B\" ; if ($?) { g++ bios.cpp -o bios -lsfml-graphics -lsfml-window -lsfml-system } ; if ($?) { .\bios }
+    cd "c:\Users\matth\.c\proj1\ISA20B\" ; if ($?) { g++ -O3 bios.cpp -o bios} ; if ($?) { .\bios }             
 
     cd "c:\Users\matth\.c\proj1\ISA20B\" ; if ($?) { g++ -O3 bios.cpp -o bios -lsfml-graphics -lsfml-window -lsfml-system } ; if ($?) { .\bios }    
 

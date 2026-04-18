@@ -1,6 +1,15 @@
-lr 10 500
+lr 20 500
 stall 0
-sdi 10 1
-cmp 10 3 2
-null 10
+sdi 20 1
+lr 21 500
+stall 0
+null 20
+null 21
+sdi 21 1
+cmp 21 !=
+jmp 5
+cmp 20 !=
 jmp 2
+
+
+

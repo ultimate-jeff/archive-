@@ -66,6 +66,7 @@ struct log_entry{
     uint32_t pc;
     uint32_t opcode;
     uint32_t code_id;
+    uint32_t flags;
 };
 
 class Core;
@@ -125,6 +126,7 @@ public:
         Core::instances++;
         this->core_addr = offm_banks[this->curent_offmb].get_core_addir(this->core_id);
     };
+    inline __attribute__((always_inline))
     void clock(){
         if (this->stall_ticks > 0){
             this->stall_ticks--;
@@ -132,10 +134,12 @@ public:
         }
         this->pc.clock();
     }
+    inline __attribute__((always_inline))
     uint32_t get_curent_inst(uint32_t addr){
         this->curent_raw_inst = this->mem.get_addr(addr+offm_banks[this->curent_offmb].get_addr(3,this->core_addr));
         return this->curent_raw_inst;
     }
+    inline __attribute__((always_inline))
     uint32_t add_offset(uint32_t op,uint32_t op_index,uint32_t opcode){
         uint32_t offset_bit_map = offset_map[opcode];
         bool add_offset = (offset_bit_map >> (2 - op_index)) & 1;
@@ -144,6 +148,7 @@ public:
         }
         return op;
     }
+    inline __attribute__((always_inline))
     void exec_inst(){
         uint32_t op[3] = {0,0,0};
         this->get_curent_inst(this->pc.counter);
@@ -283,13 +288,12 @@ public:
         }
     }
     void stack(uint32_t op[3]){ // null
-        print("regester " + to_string(op[0]) + " has value " + to_string(mask(this->mem.get_addr(op[0]),b10_mask)));
+        print("regester " + to_string(op[0]) + " has value " + to_string((this->mem.get_addr(op[0])&b10_mask)) + " with flags of " + to_string((this->mem.get_addr(op[0]) >> 10)&b5_mask));
     }
     void interupt(uint32_t op[3]){ // core_id, addr_ptr :offsetm:010
         uint32_t sub_op[3] = {this->mem.get_addr(op[1]),0,0};
         cores[mask(op[0],b5_mask)].call(sub_op);
     }
-    
     void ADI(uint32_t op[3]){ // reg , data  : offsetM:100
         this->mem.set_addr(op[0],this->pu.ADD(this->mem.get_addr(op[0]),op[1]));
     }
@@ -338,16 +342,19 @@ private:
     uint32_t ptr_ld(uint32_t addr){
         return this->mem.get_addr(addr);
     }
-    inline __attribute__((always_inline)) void decode_format_1(uint32_t * op, uint32_t curent_raw_inst, uint32_t opcode, Core* cpu){
+    inline __attribute__((always_inline)) 
+    void decode_format_1(uint32_t * op, uint32_t curent_raw_inst, uint32_t opcode, Core* cpu){
         op[0] = cpu->add_offset(get_bit_section(curent_raw_inst,0,15),0,opcode);// add offset
     }
-    inline __attribute__((always_inline)) void decode_format_2(uint32_t * op, uint32_t curent_raw_inst, uint32_t opcode, Core* cpu){
+    inline __attribute__((always_inline)) 
+    void decode_format_2(uint32_t * op, uint32_t curent_raw_inst, uint32_t opcode, Core* cpu){
         //op[0] = get_bit_section(curent_raw_inst, 10, 5); // Register (Bits 10-14)
         //op[1] = get_bit_section(curent_raw_inst, 0, 10);
         op[0] = cpu->add_offset(get_bit_section(curent_raw_inst, 10, 5),0,opcode);// add offset
         op[1] = cpu->add_offset(get_bit_section(curent_raw_inst, 0, 10),1,opcode);// add offset
     }
-    inline __attribute__((always_inline)) void decode_format_3(uint32_t * op, uint32_t curent_raw_inst, uint32_t opcode, Core* cpu){
+    inline __attribute__((always_inline)) 
+    void decode_format_3(uint32_t * op, uint32_t curent_raw_inst, uint32_t opcode, Core* cpu){
         //op[0] = get_bit_section(curent_raw_inst,10,5);
         //op[1] = get_bit_section(curent_raw_inst,5,5);
         //op[2] = get_bit_section(curent_raw_inst,0,5);
@@ -369,6 +376,7 @@ Core cores[8] = {
 };
 
 uint32_t Core::instances = 0;
+inline __attribute__((always_inline)) 
 int CLOCK(int active_cores){
     int active_coress = 0;
     for(int i = 0; i < 8 ; i++){

@@ -93,8 +93,19 @@ opcode_map = {
     "pull_c":31,#reg,t_reg,core_id
     # sudo instructions
     "data":0,
+    "int":0,
     "interupt":18,
-    "rc":18
+    "rc":18,
+    "return":25,
+    "ldoff_ptr":27
+}
+flag_table = {
+    "==":[2,0],
+    "!=":[2,2],
+    "<":[4,0],
+    ">=":[4,4],
+    ">":[2+4,2+4],
+    "<=":[2+4,0]
 }
 
 class Util:
@@ -278,13 +289,22 @@ class Char_comp:
                 instructions += self._apply_shift(line,line_num)
         return instructions
 
+def flag_comp(text:"str"):
+    n_text = ""
+    for line in text.splitlines():
+        for k in flag_table.keys():
+            if k in line:
+                print(f"foud keyword {k}")
+                line = line.replace(k,f"{flag_table[k][0]} {flag_table[k][1]}")
+        n_text += line+"\n"
+    return n_text
+
 def ccomp(text):
     global loger
     num_comp = Num_comp()
     char_comp = Char_comp()
-    #result = num_comp.comp(text)
-    #result = char_comp.comp(text)
-    result = num_comp.comp(char_comp.comp(text))
+    n_text = flag_comp(text)
+    result = num_comp.comp(char_comp.comp(n_text))
     text_out = ""
     for line in result:
         print(line)
@@ -327,7 +347,7 @@ else:
     ccomp(text)
 
 # cd "ISA20B";./bios    
-# 
+# is != for loops
 """
 flags; > flags are only set after an ALU op  and the output regester of the alu holds the flags
     True :place_value(1) > this flag is alwase set to true

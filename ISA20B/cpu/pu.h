@@ -134,7 +134,7 @@ public:
         auto [a, tA] = decomp_reg(regA);
         auto [b, tB] = decomp_reg(regB);
         auto [result, flags] = alu.ADD(a, b);
-        print("on op add the flags are " + to_string(flags));
+        //print("on op add the flags are " + to_string(flags));
         //this->out_reg = comp_reg(result, flags, tA);
         return comp_reg(result, flags, tA);
     }
@@ -142,7 +142,7 @@ public:
         auto [a, tA] = decomp_reg(regA);
         auto [b, tB] = decomp_reg(regB);
         auto [result, flags] = alu.SUB(a, b);
-        print("on op sub the flags are " + to_string(flags));
+        //print("on op sub the flags are " + to_string(flags));
         //this->out_reg = comp_reg(result, flags, tA);
         return comp_reg(result, flags, tA);
     }

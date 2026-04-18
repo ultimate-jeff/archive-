@@ -7,6 +7,8 @@ info:
     this is a 20 bit custom cpu emulator that is baced on the intel 8086 prosesor and the youtuber's Mattbatwings minecraft cpu
     this emulator also comes with a compiler for it 
     anyone can use this emulator as they please and i encurage you to build and learn from this emulator 
+rand_info:
+    this emulator has a python assembly compiler "ISA20B/experamenting.py" and the .exe version can open text files and then print out the compiled result
 
 specs:
 - has 8 cores

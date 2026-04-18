@@ -18,8 +18,9 @@ namespace interface{
 
     Memory *mem;
     vector<function<void(int)>> devices;
-
+    
     template<typename T>
+    inline __attribute__((always_inline))
     void init_device(T* instance) {
         // This creates the lambda for ANY class T that has a .clock(int) method
         devices.push_back([instance](int loops) {
@@ -32,13 +33,16 @@ namespace interface{
         mem = port_mem;
         //initialize_devices();
     }
+    inline __attribute__((always_inline))
     void write_port(uint32_t addr,uint32_t value){
         mem->set_addr(addr,value);
     }
+    inline __attribute__((always_inline))
     uint32_t read_port(uint32_t addr){
             cout << "read from port " << addr << endl;
             return mem->get_addr(addr);
     }
+    inline __attribute__((always_inline))
     void clock(int loops){
         for(int i = 0 ; i < devices.size() ; i++){
             devices[i](loops);
@@ -55,6 +59,7 @@ namespace protocall{
     uint32_t protocall_num = 1;
     uint32_t protocall_alocation = 2;
     uint32_t ptr_alocation = 15;
+    inline __attribute__((always_inline))
     void fill_alocation(uint32_t start_addr,uint32_t end_addr,uint32_t value = 0){
         for(uint32_t i = start_addr ; i < end_addr ; i++){
             interface::mem->set_addr(i,value);
@@ -81,6 +86,7 @@ namespace protocall{
         interface::mem->set_addr(addr, end_addr);
         return start_addr;
     }
+    inline __attribute__((always_inline))
     void init(){
         interface::mem->set_addr(0,protocall_num);
         interface::mem->set_addr(0,ptr_alocation); // 15 for 15 alocarions

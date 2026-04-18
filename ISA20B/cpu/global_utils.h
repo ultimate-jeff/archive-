@@ -9,7 +9,18 @@
 
 using namespace std;
 
+
+struct Logentry {
+    uint64_t loop;
+    uint8_t core;
+    uint8_t op;
+    uint32_t addr;
+    uint32_t reg;
+    uint32_t value;
+    uint32_t flags;
+};
 string print_que;
+vector<Logentry> logs;
 const int mem_size = 4096;
 const int mem_addr_size = 12;
 const int reg_size = 20;
@@ -28,31 +39,47 @@ const uint32_t b15_mask = 0x7FFF;
 const uint32_t b8_mask = 0xFF;
 const uint32_t b3_mask = 0x7;
 
-inline __attribute__((always_inline)) uint32_t sine_mask(uint32_t mask){
+inline __attribute__((always_inline)) 
+uint32_t sine_mask(uint32_t mask){
     return (mask + 1) >> 1;
 };
-inline __attribute__((always_inline)) uint32_t mask(uint32_t value, uint32_t mask){
+inline __attribute__((always_inline)) 
+uint32_t mask(uint32_t value, uint32_t mask){
     return value & mask;
 };
-inline  __attribute__((always_inline)) uint32_t get_bit_section(uint32_t value, uint32_t start_bit, uint32_t num_bits){
+inline  __attribute__((always_inline)) 
+uint32_t get_bit_section(uint32_t value, uint32_t start_bit, uint32_t num_bits){
     uint32_t m = (1 << num_bits) - 1;
     return (value >> start_bit) & m;
 };
 int32_t conv_to_int(uint32_t value, uint32_t mask){
     value &= mask;
     uint32_t sign = sine_mask(mask);
-    uint32_t width = __builtin_popcount(mask); // GCC/Clang
+    uint32_t width = __builtin_popcount(mask);
     if (value & sign)
         return (int32_t)(value - (1u << width));
     return (int32_t)value;
 }
-inline __attribute__((always_inline)) void print(string msg){
+//inline __attribute__((always_inline)) 
+//void print(string msg){
     //print_que += (msg + "\n");
+//}
+#if ENABLE_DEBUG_PRINT == 1
+
+inline __attribute__((always_inline)) void print(const string& msg){
+    print_que += msg + "\n";
 }
+inline __attribute__((always_inline))
 void cout_print_que(){
     cout << print_que;
     print_que = ""; 
 }
+#else
+
+inline __attribute__((always_inline)) void print(const string&) {}
+inline __attribute__((always_inline)) void cout_print_que(){}
+#endif
+
 
 class Call_stack{
     vector<uint32_t> stack;//[b8_mask];
