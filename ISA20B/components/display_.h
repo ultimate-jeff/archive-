@@ -121,33 +121,17 @@ class Display{
     uint32_t device_id = 1;
     uint32_t ticks_per_clock = 80;
     public:
-        Display(){
-            dm::display.init();
-            this->start_addr = protocall::get_start_addr(this->requierd_regs);
-            interface::init_device(this);
-            cout << ("created display instance starting at addr " + to_string(this->start_addr) + " and going " + to_string(this->requierd_regs)) << endl;
-            interface::mem->mem[this->start_addr] = this->device_id;
-        }
-        inline __attribute__((always_inline))
-        void clock(int loops) {
-            if (loops % this->ticks_per_clock == 0) {
-                print("Display clocked");
-                if(dm::display.window.isOpen()){
-                    dm::display.clock();
-                    if(interface::mem->mem[start_addr+4+64] == 1){
-                        this->display_data(interface::mem->mem[start_addr+1],interface::mem->mem[start_addr+2]);
-                    }
-                }
-            }
-        }
+    Display(){
+        dm::display.init();
+        this->start_addr = protocall::get_start_addr(this->requierd_regs);
+        interface::init_device(this);
+        cout << ("created display instance starting at addr " + to_string(this->start_addr) + " and going " + to_string(this->requierd_regs)) << endl;
+        interface::mem->mem[this->start_addr] = this->device_id;
+    }
     inline __attribute__((always_inline))
-    void display_data(uint32_t x, uint32_t y){
-        const uint32_t tile_width = 8;
-        for(int i = 0 ; i < 64 ; i++){
-            uint32_t value = interface::mem->mem[this->start_addr + i + 3]; // the 3 is protocal spacing
-            uint32_t local_x = (i % tile_width)+x;
-            uint32_t local_y = (i / tile_width)+y; // this is display cords
-            dm::display.display_pixel(local_x,local_y,value);
+    void clock(int loops) {
+        if (loops % this->ticks_per_clock == 0) {
+            
         }
     }
 };

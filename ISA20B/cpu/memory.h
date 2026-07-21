@@ -62,11 +62,13 @@ public:
         Memory::instances++;
         this->fill_mem();
     };
+    inline __attribute__((always_inline))
     void fill_mem(uint32_t value = 0){
         for (int i = 0; i < mem_size; i++){
             this->mem[i] = value;
         }
     };
+    inline __attribute__((always_inline))
     uint32_t mask(uint32_t value){
         // creates the 20 bit value
         return value & this->Bmask;
@@ -75,17 +77,21 @@ public:
         // creates the 12 bit value
         return value & this->addr_mask;
     };
-    inline __attribute__((always_inline))uint32_t get_addr(uint32_t addr){
+    inline __attribute__((always_inline))
+    uint32_t get_addr(uint32_t addr){
         return this->mem[addr & this->addr_mask];
     };
-    inline __attribute__((always_inline))void set_addr(uint32_t addr, uint32_t value){
+    inline __attribute__((always_inline))
+    void set_addr(uint32_t addr, uint32_t value){
         this->mem[addr & this->addr_mask] = value & b20_mask;
     };
     // i love c++
-    inline __attribute__((always_inline))void load_reg(uint32_t addr, uint32_t value, uint32_t offsets){
+    inline __attribute__((always_inline))
+    void load_reg(uint32_t addr, uint32_t value, uint32_t offsets){
         this->mem[(addr+offsets) & this->addr_mask] = value & b20_mask;//this->set_addr(addr, value);
     };
-    inline __attribute__((always_inline))uint32_t read_reg(uint32_t addr, uint32_t offsets){
+    inline __attribute__((always_inline))
+    uint32_t read_reg(uint32_t addr, uint32_t offsets){
         return this->mem[(addr+offsets) & this->addr_mask];//return this->get_addr(addr);
     };
 };

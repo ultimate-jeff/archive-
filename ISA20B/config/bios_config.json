@@ -1,5 +1,5 @@
 {
-    "prints_per_tick":32000,
+    "prints_per_tick":1024,
     "port_core_id":2,
     "boot_path":"boot.txt",
     "main_core_id":0

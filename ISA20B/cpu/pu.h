@@ -38,28 +38,7 @@ Flag decomp_flags(uint32_t value){
 class ALU{
 public:
     ALU(){};
-    /*
-   uint32_t gen_flags(uint32_t raw_result, uint32_t a, uint32_t b, bool is_sub = false){
-        Flag f{};
-        uint32_t result = (raw_result & b10_mask);
-        uint32_t sign = sine_mask(b10_mask);   // sign bit (bit 9)
-        f.zero = (result == 0);
-        f.carry = (raw_result > b10_mask);
-        
-        bool sign_a = (a & sign);
-        bool sign_b = (b & sign);
-        bool sign_r = (result & sign);
-        
-        if (is_sub) {
-            f.overflow = (sign_a != sign_b) && (sign_r != sign_a);
-        } else {
-            f.overflow = (sign_a == sign_b) && (sign_r != sign_a);
-        }
-        
-        f.True = true;
-        f.invert = (result & sign) != 0;
-        return comp_flags(f);
-    }*/
+    inline __attribute__((always_inline))
     uint32_t gen_flags(uint32_t raw_result, uint32_t a, uint32_t b, bool is_sub = false){
         uint32_t result = raw_result & b10_mask;
         uint32_t sign = sine_mask(b10_mask);
@@ -76,33 +55,40 @@ public:
             (overflow << 3) |
             (sign_r   << 4);
     }
-    inline __attribute__((always_inline)) pair<uint32_t,uint32_t> ADD(uint32_t a, uint32_t b){
+    inline __attribute__((always_inline)) 
+    pair<uint32_t,uint32_t> ADD(uint32_t a, uint32_t b){
         uint32_t raw_raw = a + b;
         //uint32_t raw = (raw_raw & b10_mask);
         return {(raw_raw & b10_mask), gen_flags(a + b,a,b)};
     }
-    inline __attribute__((always_inline)) pair<uint32_t,uint32_t> SUB(uint32_t a, uint32_t b){
+    inline __attribute__((always_inline)) 
+    pair<uint32_t,uint32_t> SUB(uint32_t a, uint32_t b){
         uint32_t raw_raw = a - b;
         //uint32_t raw = (raw_raw & b10_mask);
         return {(raw_raw & b10_mask), gen_flags(raw_raw,a,b,true)};
     }
-    inline __attribute__((always_inline)) pair<uint32_t,uint32_t> AND(uint32_t a, uint32_t b){
+    inline __attribute__((always_inline)) 
+    pair<uint32_t,uint32_t> AND(uint32_t a, uint32_t b){
         uint32_t raw = ((a & b) & b10_mask);
         return {raw, gen_flags(raw,a,b)};
     }
-    inline __attribute__((always_inline)) pair<uint32_t,uint32_t> NAND(uint32_t a, uint32_t b){
+    inline __attribute__((always_inline)) 
+    pair<uint32_t,uint32_t> NAND(uint32_t a, uint32_t b){
         uint32_t raw = (~(a & b)) & b10_mask;
         return {raw, gen_flags(raw,a,b)};
     }
-    inline __attribute__((always_inline)) pair<uint32_t,uint32_t> OR(uint32_t a, uint32_t b){
+    inline __attribute__((always_inline)) 
+    pair<uint32_t,uint32_t> OR(uint32_t a, uint32_t b){
         uint32_t raw = ((a | b) & b10_mask);
         return {raw, gen_flags(raw,a,b)};
     }
-    inline __attribute__((always_inline)) pair<uint32_t,uint32_t> XOR(uint32_t a, uint32_t b){
+    inline __attribute__((always_inline)) 
+    pair<uint32_t,uint32_t> XOR(uint32_t a, uint32_t b){
         uint32_t raw = ((a ^ b) & b10_mask);
         return {raw, gen_flags(raw,a,b)};
     }
-    inline __attribute__((always_inline)) pair<uint32_t,uint32_t> NOT(uint32_t a,uint32_t b){ // takes a b for standerd format
+    inline __attribute__((always_inline)) 
+    pair<uint32_t,uint32_t> NOT(uint32_t a,uint32_t b){ // takes a b for standerd format
         uint32_t raw = ((~a) & b10_mask);
         return {raw, gen_flags(raw,a,0)};
     }
@@ -112,24 +98,26 @@ public:
     ALU alu;
     uint32_t regA = 0;
     uint32_t regB = 0;
-    uint32_t loads = 0;
+    uint32_t loads = 0; 
     uint32_t out_reg = 0;
     int curent_inst = 0;
     PU(){};
-    inline __attribute__((always_inline)) uint32_t comp_reg(uint32_t b10bit, uint32_t mid5bit, uint32_t t5bit){
+    inline __attribute__((always_inline)) 
+    uint32_t comp_reg(uint32_t b10bit, uint32_t mid5bit, uint32_t t5bit){
         uint32_t result = 0;
         result |= (t5bit << (alu_data_size + 5)); // Bit 15+
         result |= (mid5bit << alu_data_size);     // Bit 10-14 (FLAGS)
         result |= b10bit;                         // Bit 0-9
         return (result & b20_mask);
     }
-    inline __attribute__((always_inline)) pair<uint32_t,uint32_t> decomp_reg(uint32_t reg){
+    inline __attribute__((always_inline)) 
+    pair<uint32_t,uint32_t> decomp_reg(uint32_t reg){
         uint32_t b10bit = get_bit_section(reg, 0, alu_data_size);
         //uint32_t mid5bit = get_bit_section(reg, alu_data_size, 5);
         uint32_t t5bit = get_bit_section(reg, alu_data_size + 5, 5);
         return {b10bit, t5bit};
     }
-
+    inline __attribute__((always_inline))
     uint32_t ADD(uint32_t regA, uint32_t regB){
         auto [a, tA] = decomp_reg(regA);
         auto [b, tB] = decomp_reg(regB);
@@ -138,6 +126,7 @@ public:
         //this->out_reg = comp_reg(result, flags, tA);
         return comp_reg(result, flags, tA);
     }
+    inline __attribute__((always_inline))
     uint32_t SUB(uint32_t regA, uint32_t regB){
         auto [a, tA] = decomp_reg(regA);
         auto [b, tB] = decomp_reg(regB);
@@ -146,6 +135,7 @@ public:
         //this->out_reg = comp_reg(result, flags, tA);
         return comp_reg(result, flags, tA);
     }
+    inline __attribute__((always_inline))
     uint32_t AND(uint32_t regA, uint32_t regB){
         auto [a, tA] = decomp_reg(regA);
         auto [b, tB] = decomp_reg(regB);
@@ -153,6 +143,7 @@ public:
         //this->out_reg = comp_reg(result, flags, tA);
         return comp_reg(result, flags, tA);
     }
+    inline __attribute__((always_inline))
     uint32_t NAND(uint32_t regA, uint32_t regB){
         auto [a, tA] = decomp_reg(regA);
         auto [b, tB] = decomp_reg(regB);
@@ -160,6 +151,7 @@ public:
         //this->out_reg = comp_reg(result, flags, tA);
         return comp_reg(result, flags, tA);
     }
+    inline __attribute__((always_inline))
     uint32_t OR(uint32_t regA, uint32_t regB){
         auto [a, tA] = decomp_reg(regA);
         auto [b, tB] = decomp_reg(regB);
@@ -167,6 +159,7 @@ public:
         //this->out_reg = comp_reg(result, flags, tA);
         return comp_reg(result, flags, tA);
     }
+    inline __attribute__((always_inline))
     uint32_t XOR(uint32_t regA, uint32_t regB){
         auto [a, tA] = decomp_reg(regA);
         auto [b, tB] = decomp_reg(regB);
@@ -174,17 +167,20 @@ public:
         //this->out_reg = comp_reg(result, flags, tA);
         return comp_reg(result, flags, tA);
     }
+    inline __attribute__((always_inline))
     uint32_t NOT(uint32_t regA,uint32_t regB){ // takes regB for standerd format
         auto [a, tA] = decomp_reg(regA);
         auto [result, flags] = alu.NOT(a,0);
         //this->out_reg = comp_reg(result, flags, tA);
         return comp_reg(result, flags, tA);
     }
+    inline __attribute__((always_inline))
     uint32_t shift_up(uint32_t regA, uint32_t amount){
         regA = regA << amount;
         //this->out_reg = mask(regA, b20_mask);
         return (regA & b20_mask);
     }
+    inline __attribute__((always_inline))
     uint32_t shift_down(uint32_t regA, uint32_t amount){
         regA = regA >> amount;
         //this->out_reg = mask(regA, b20_mask);

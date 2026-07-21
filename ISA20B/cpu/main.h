@@ -19,7 +19,7 @@ using namespace nlohmann;
 // run command : ./main
 
 using namespace std;
-using file = std::ifstream;
+//using file = std::ifstream;
 Offset_mem offm;
 Offset_mem offm_banks[8] = {
     Offset_mem(), Offset_mem(), Offset_mem(), Offset_mem(),
@@ -78,6 +78,7 @@ public:
     uint32_t core_addr;
     uint32_t curent_raw_inst = 0;
     uint32_t stall_ticks = 0;
+    uint32_t op[3] = {0,0,0};
     static uint32_t instances;
     Memory mem;
     PU pu;
@@ -141,9 +142,9 @@ public:
     }
     inline __attribute__((always_inline))
     uint32_t add_offset(uint32_t op,uint32_t op_index,uint32_t opcode){
-        uint32_t offset_bit_map = offset_map[opcode];
-        bool add_offset = (offset_bit_map >> (2 - op_index)) & 1;
-        if(add_offset){
+        //uint32_t offset_bit_map = offset_map[opcode];
+        //bool add_offset = (offset_map[opcode] >> (2 - op_index)) & 1;
+        if(((offset_map[opcode] >> (2 - op_index)) & 1)){
             op += offm_banks[this->curent_offmb].get_addr(op_index,this->core_addr);
         }
         return op;
@@ -153,26 +154,22 @@ public:
         uint32_t op[3] = {0,0,0};
         this->get_curent_inst(this->pc.counter);
         uint32_t opcode = get_bit_section(this->curent_raw_inst,15,5);
-        uint32_t format = this->spliting_map[opcode];
+        //uint32_t format = this->spliting_map[opcode];
         print("exacuting op " + to_string(opcode) + " in core " + to_string(this->core_id) + " at address " + to_string(this->pc.counter));
-        switch(format){
+        switch(this->spliting_map[opcode]){ // (format){
             case 0:
                 break;
             case 1:
-                this->decode_format_1(op,this->curent_raw_inst,opcode,this);
-                break;
+                this->decode_format_1(op,this->curent_raw_inst,opcode,this);break;
             case 2:
-                this->decode_format_2(op,this->curent_raw_inst,opcode,this);
-                break;
+                this->decode_format_2(op,this->curent_raw_inst,opcode,this);break;
             case 3:
-                this->decode_format_3(op,this->curent_raw_inst,opcode,this);
-                break;
+                this->decode_format_3(op,this->curent_raw_inst,opcode,this);break;
         }
 
         //Instr func = op_methods[opcode];
         //(this->*func)(op);
-        switch (opcode)
-        {
+        switch (opcode){
         case 0:this->HULT(op);break;
         case 1:this->stall(op);break;
         case 2:this->LR(op);break;
@@ -207,18 +204,21 @@ public:
         case 31:this->pull_c(op);break;
         default:this->HULT(op);break;
         }
-        this->clock();
+        //this->clock();
+        this->pc.clock();
     }
-
+    inline __attribute__((always_inline))
     void HULT(uint32_t op[3]){
         this->running = false;
     }
+    inline __attribute__((always_inline))
     void stall(uint32_t op[3]){ // offsetM:000
         this->stall_ticks = op[0];
     }
     //void LR(uint32_t op[3]){ // reg , data : offsetM:100
     //    this->mem.set_addr(op[0],op[1]);
     //}
+    inline __attribute__((always_inline))
     void LR(uint32_t op[3]){ // reg , data
         uint32_t data = mask(op[1], b10_mask);
         uint32_t flags = 0;
@@ -226,46 +226,58 @@ public:
         uint32_t packed = (flags << 10) | data;
         this->mem.set_addr(op[0], packed);
     }
+    inline __attribute__((always_inline))
     void push(uint32_t op[3]){ // reg , data : offsetM:100
         uint32_t value = this->mem.get_addr(op[0]);
         this->mem.set_addr(op[1],value);
     }
+    inline __attribute__((always_inline))
     void pull(uint32_t op[3]){ // reg , data : offsetM:100
         uint32_t value = this->mem.get_addr(op[1]);
         this->mem.set_addr(op[0],value);
     }
+    inline __attribute__((always_inline))
     void push_ptr(uint32_t op[3]){ // reg , reg_ptr : offsetM:110
         op[1] = this->ptr_ld(op[1]);
         uint32_t value = this->mem.get_addr(op[0]);
         this->mem.set_addr(op[1],value);
     }
+    inline __attribute__((always_inline))
     void pull_ptr(uint32_t op[3]){ // reg , reg_ptr : offsetM:110
         op[1] = this->ptr_ld(op[1]);
         uint32_t value = this->mem.get_addr(op[1]);
         this->mem.set_addr(op[0],value);
     }
+    inline __attribute__((always_inline))
     void add(uint32_t op[3]){ // regA , regB , regC : offsetM:111
         this->mem.set_addr(op[2],this->pu.ADD(mem.get_addr(op[0]),mem.get_addr(op[1])));
     }
+    inline __attribute__((always_inline))
     void sub(uint32_t op[3]){ // regA , regB , regC : offsetM:111
         this->mem.set_addr(op[2],this->pu.SUB(mem.get_addr(op[0]),mem.get_addr(op[1])));
     }
+    inline __attribute__((always_inline))
     void AND(uint32_t op[3]){ // regA , regB , regC : offsetM:111
         this->mem.set_addr(op[2],this->pu.AND(mem.get_addr(op[0]),mem.get_addr(op[1])));
     }
+    inline __attribute__((always_inline))
     void NAND(uint32_t op[3]){ // regA , regB , regC : offsetM:111
         this->mem.set_addr(op[2],this->pu.NAND(mem.get_addr(op[0]),mem.get_addr(op[1])));
     }
+    inline __attribute__((always_inline))
     void OR(uint32_t op[3]){ // regA , regB , regC : offsetM:111
         this->mem.set_addr(op[2],this->pu.OR(mem.get_addr(op[0]),mem.get_addr(op[1])));
     }
+    inline __attribute__((always_inline))
     void XOR(uint32_t op[3]){ // regA , regB , regC : offsetM:111
         this->mem.set_addr(op[2],this->pu.XOR(mem.get_addr(op[0]),mem.get_addr(op[1])));
     }
+    inline __attribute__((always_inline))
     void MOVE(uint32_t op[3]){ // : offsetM:111
         uint32_t value = mem.get_addr(ptr_ld(op[0]));
         mem.set_addr(ptr_ld(op[1]), value);
     }
+    inline __attribute__((always_inline))
     void cmp(uint32_t op[3]){ // reg , flags , invert_mask : offsetM:100
         //uint32_t reg = this->mem.get_addr(op[0]);
         uint32_t raw_flags = get_bit_section(this->mem.get_addr(op[0]),10,5);
@@ -274,12 +286,14 @@ public:
         this->do_jmp = (raw_flags & cmp_flags) == cmp_flags;// == cmp_flags;     != 0;   >= 0;
         print("set do_jmp to : " + to_string(this->do_jmp) + " and regester flags where " + to_string(raw_flags) + " and cmp flags where " + to_string(cmp_flags));
     }
+    inline __attribute__((always_inline))
     void jmp(uint32_t op[3]){ // address : offsetM:000
         if(this->do_jmp){
             this->pc.jmp(op[0],this->do_jmp,false); // added -1 to ensure it jmp's to corect addr and this might have probs at addr 0
             print("jumped to " + to_string(op[0]));
         }
     }
+    inline __attribute__((always_inline))
     void jmp_ptr(uint32_t op[3]){ // addr_ptr , flags(jmp/call): offsetM:101
         uint32_t value = this->ptr_ld(op[0]);
         if(this->do_jmp){
@@ -287,58 +301,74 @@ public:
             print("jumped to " + to_string(value));
         }
     }
+    inline __attribute__((always_inline))
     void stack(uint32_t op[3]){ // null
         print("regester " + to_string(op[0]) + " has value " + to_string((this->mem.get_addr(op[0])&b10_mask)) + " with flags of " + to_string((this->mem.get_addr(op[0]) >> 10)&b5_mask));
     }
+    inline __attribute__((always_inline))
     void interupt(uint32_t op[3]){ // core_id, addr_ptr :offsetm:010
         uint32_t sub_op[3] = {this->mem.get_addr(op[1]),0,0};
         cores[mask(op[0],b5_mask)].call(sub_op);
     }
+    inline __attribute__((always_inline))
     void ADI(uint32_t op[3]){ // reg , data  : offsetM:100
         this->mem.set_addr(op[0],this->pu.ADD(this->mem.get_addr(op[0]),op[1]));
     }
+    inline __attribute__((always_inline))
     void SDI(uint32_t op[3]){ // reg , data  : offsetM:100
         this->mem.set_addr(op[0],this->pu.SUB(this->mem.get_addr(op[0]),op[1]));
     }
+    inline __attribute__((always_inline))
     void shift_u(uint32_t op[3]){ // reg_a/reg , reg_b/amount , reg_c/output : offsetM:111
         this->mem.set_addr(op[2],this->mem.get_addr(op[0]) << this->mem.get_addr(op[1]));
     }
+    inline __attribute__((always_inline))
     void shift_d(uint32_t op[3]){ // reg_a , reg_b , reg_c : offsetM:111
         this->mem.set_addr(op[2],this->mem.get_addr(op[0]) >> this->mem.get_addr(op[1]));
     }
+    inline __attribute__((always_inline))
     void cstate(uint32_t op[3]){ // core_id ,start/stop : offsetM:100
         //cout << "this is not filed in" << endl;
         op[0] = mask(op[0],b3_mask);
         cores[op[0]].running = (op[1] > 0);
     }
+    inline __attribute__((always_inline))
     void call(uint32_t op[3]){ // addr : offsetM:000
         this->pc.jmp(op[0],true,true);
     }
+    inline __attribute__((always_inline))
     void ret(uint32_t op[3]){ // : offsetM:000
         this->pc.ret();
     }
+    inline __attribute__((always_inline))
     void ld_ptr(uint32_t op[3]){ // t_reg , reg : offsetM:111
         //uint32_t addr = this->mem.get_addr(op[1]); // get value of reg
         uint32_t value = this->mem.get_addr(this->mem.get_addr(op[1]));
         this->mem.set_addr(op[0],value);
     }
+    inline __attribute__((always_inline))
     void ldoffm_ptr(uint32_t op[3]){ // offset_reg_ptr , ptr_reg  : offsetM:111
         offm_banks[this->curent_offmb].set_addr(this->ptr_ld(op[0]),this->core_addr,this->ptr_ld(op[1]));
     }
+    inline __attribute__((always_inline))
     void LD_off(uint32_t op[3]){ // offset_reg , data : offsetM:100
         offm_banks[this->curent_offmb].set_addr(op[0],this->core_addr,op[1]);
     }
+    inline __attribute__((always_inline))
     void SoffmB(uint32_t op[3]){ //set offset memory bank : offset_reg_bank , core_id
         uint32_t value = this->mem.get_addr(op[0]);
         this->curent_offmb = mask(value,b5_mask);
     }
+    inline __attribute__((always_inline))
     void push_c(uint32_t op[3]){ // reg, t_reg , core_id
         cores[mask(op[2],b3_mask)].mem.set_addr(op[1],this->mem.get_addr(op[0]));
     }
+    inline __attribute__((always_inline))
     void pull_c(uint32_t op[3]){// reg, t_reg , core_id
         this->mem.set_addr(op[1],cores[mask(op[2],b3_mask)].mem.get_addr(op[0]));
     }
 private:
+    inline __attribute__((always_inline))
     uint32_t ptr_ld(uint32_t addr){
         return this->mem.get_addr(addr);
     }
@@ -377,17 +407,17 @@ Core cores[8] = {
 
 uint32_t Core::instances = 0;
 inline __attribute__((always_inline)) 
-int CLOCK(int active_cores){
+int CLOCK(){
     int active_coress = 0;
     for(int i = 0; i < 8 ; i++){
         if(cores[i].running){
-            //cout << "exacuting core: " << i << endl;
             cores[i].exec_inst();
             active_coress++;
         }
     }
     return active_coress;
 }
+
 void start_cpu(){
     int loops = 0;
     int active_cores = 1;
@@ -397,7 +427,7 @@ void start_cpu(){
         if (loops % 50 == 0){
             cout << "on loop " << loops << endl;
         }
-        active_cores = CLOCK(active_cores);
+        active_cores = CLOCK();
     }
     cout << "program ended" << endl;
 }

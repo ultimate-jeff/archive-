@@ -66,7 +66,8 @@ int32_t conv_to_int(uint32_t value, uint32_t mask){
 //}
 #if ENABLE_DEBUG_PRINT == 1
 
-inline __attribute__((always_inline)) void print(const string& msg){
+inline __attribute__((always_inline)) 
+void print(const string& msg){
     print_que += msg + "\n";
 }
 inline __attribute__((always_inline))
@@ -84,8 +85,8 @@ inline __attribute__((always_inline)) void cout_print_que(){}
 class Call_stack{
     vector<uint32_t> stack;//[b8_mask];
 public:
-    Call_stack(){
-        this->fill_mem(0);
+    Call_stack() : stack(256,0){
+        //this->fill_mem(0);
     }
     void fill_mem(uint32_t value=0){
         value = mask(value,b12_mask);
@@ -93,14 +94,16 @@ public:
             this->stack.push_back(value);
         }
     }
-   uint32_t get_top(bool pop = true) {
+    inline __attribute__((always_inline)) 
+    uint32_t get_top(bool pop = true) {
         if (stack.empty()) return 0;
         uint32_t value = stack.back(); // Use back() for LIFO
         if (pop) stack.pop_back();
         return value;
     }
 
-    inline __attribute__((always_inline)) void call(uint32_t return_addr) {
+    inline __attribute__((always_inline)) 
+    void call(uint32_t return_addr) {
         stack.push_back(mask(return_addr, b12_mask));
     }
 
@@ -116,7 +119,8 @@ public:
     PC(){};
     void on_clock(){
     }
-    inline __attribute__((always_inline)) void clock(){
+    inline __attribute__((always_inline)) 
+    void clock(){
         this->counter = ((this->counter+1) & b12_mask);
         //this->on_clock();
     };
@@ -126,10 +130,11 @@ public:
                 // Push the NEXT instruction address as the return point
                 this->call_stack.call(this->counter); 
             }
-            this->counter = mask(addr-1, b12_mask);
+            this->counter = (addr-1 & b12_mask);
         }
     }
-    inline __attribute__((always_inline)) void ret() {
+    inline __attribute__((always_inline)) 
+    void ret() {
         this->counter = this->call_stack.get_top(true);
     }
 };

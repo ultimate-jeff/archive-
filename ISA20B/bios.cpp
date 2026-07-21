@@ -117,11 +117,11 @@ void main_loop(Timer timer,int prints_per_tick = 8){
     int active_cores = 1;
     while(active_cores >= 1){
         loops++;
-        print("on loop " + to_string(loops));
         if (loops % prints_per_tick == 0){
+            print("on loop " + to_string(loops));
             cout_print_que();
         }
-        active_cores = CLOCK(active_cores);
+        active_cores = CLOCK();
         interface::clock(loops);
     }
     cout_print_que();
@@ -132,10 +132,6 @@ void main_loop(Timer timer,int prints_per_tick = 8){
     cout << "the cps was " << cps << endl;
 }
 
-
-void create_device_instances(){
-    
-}
 int main(){
 
     json conf = load_config("config/bios_config.json");
@@ -179,11 +175,11 @@ int main(){
 compile command:   cd "ISA20B"; g++ bios.cpp -o bios -lsfml-graphics -lsfml-window -lsfml-system
 
 or : 
-    cd "c:\Users\matth\.c\proj1\ISA20B\" ; if ($?) { g++ -O3 bios.cpp -o bios} ; if ($?) { .\bios }             
+    cd "C:\Users\matt\.c\proj1\ISA20B\" ; if ($?) { g++ -O3 bios.cpp -o bios} ; if ($?) { .\bios }             
 
-    cd "c:\Users\matth\.c\proj1\ISA20B\" ; if ($?) { g++ -O3 bios.cpp -o bios -lsfml-graphics -lsfml-window -lsfml-system } ; if ($?) { .\bios }    
+    cd "C:\Users\matt\.c\proj1\ISA20B\" ; if ($?) { g++ -O3 bios.cpp -o bios -lsfml-graphics -lsfml-window -lsfml-system } ; if ($?) { .\bios }    
 
 
 
-    cd "c:\Users\matth\.c\proj1\ISA20B\" ; if ($?) { g++ -O3 -march=native -flto -fomit-frame-pointer -funroll-loops bios.cpp -o bios -lsfml-graphics -lsfml-window -lsfml-system } ; if ($?) { .\bios }
+    cd "C:\Users\matt\.c\proj1\ISA20B\" ; if ($?) { g++ -O3 -march=native -flto -fomit-frame-pointer -funroll-loops bios.cpp -o bios -lsfml-graphics -lsfml-window -lsfml-system } ; if ($?) { .\bios }
 */
